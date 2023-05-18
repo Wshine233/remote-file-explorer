@@ -25,6 +25,6 @@ export default {
 }
 
 #test{
-  color: red;
+  color: green;
 }
 </style>
