@@ -1,11 +1,10 @@
 <template>
-  <p>This is index.html</p>
-  <a href="login">Tap to login</a>
+  $END$
 </template>
 
 <script>
 export default {
-  name: "App"
+  name: "LoginPage"
 }
 </script>
 
