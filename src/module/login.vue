@@ -1,7 +1,7 @@
 <template>
   <div id="login-panel">
     <h1>用户登录</h1>
-    <form action="" method="post">
+    <form>
       <div id="username-div" class="input-field">
         <InputField label="用户名" type="text" name="username" ref="username"/>
       </div>
@@ -15,7 +15,7 @@
         </div>
       </div>
       <div>
-        <button class="action-btn" type="submit" @click="login">登录</button>
+        <button class="action-btn" type="submit" @click.prevent="login">登录</button>
       </div>
     </form>
   </div>
