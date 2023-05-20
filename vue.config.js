@@ -13,6 +13,12 @@ module.exports = defineConfig({
             template: "./src/module/login.html",
             filename: "login.html",
             title: "RFE - Login"
+        },
+        register: {
+            entry: "./src/module/register.js",
+            template: "./src/module/register.html",
+            filename: "register.html",
+            title: "RFE - Register"
         }
     }
 })

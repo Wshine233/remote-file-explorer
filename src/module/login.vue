@@ -1,7 +1,8 @@
 <template>
-  <div id="login-panel">
+  <div id="register-panel">
     <h1>用户登录</h1>
     <form>
+      <span ref="err" class="err-log" style="display: none">{{errMsg}}</span>
       <div id="username-div" class="input-field">
         <InputField label="用户名" type="text" name="username" ref="username"/>
       </div>
@@ -17,6 +18,9 @@
       <div>
         <button class="action-btn" type="submit" @click.prevent="login">登录</button>
       </div>
+      <div>
+        <a href="register">没有账号？点击注册</a>
+      </div>
     </form>
   </div>
 </template>
@@ -30,7 +34,8 @@ export default {
     return{
       remember: false,
       username: "",
-      password: ""
+      password: "",
+      errMsg: "用户名或密码错误"
     }
   },
   methods: {
@@ -38,6 +43,11 @@ export default {
       this.getUsername();
       this.getPassword();
       window.alert("username: " + this.username + "\npassword: " + this.password)
+
+      let confirm = true
+      if(confirm){
+        this.$refs["err"].style.display = "inline-block";
+      }
     },
     getUsername(){
       this.username = this.$refs.username.value;
@@ -50,7 +60,7 @@ export default {
 </script>
 
 <style scoped>
-#login-panel {
+#register-panel {
   width: 300px;
   margin: 0 auto;
   padding: 20px;
@@ -59,17 +69,17 @@ export default {
   font-size: 1rem;
 }
 
-#login-panel h1 {
+#register-panel h1 {
   margin-top: 10px;
   margin-bottom: 30px;
   text-align: center;
 }
 
-#login-panel form {
+#register-panel form {
   margin-top: 20px;
 }
 
-#login-panel form>div {
+#register-panel form>div {
   margin-bottom: 20px;
   display: flex;
   flex-direction: column;
@@ -114,5 +124,21 @@ input[type=checkbox]{
 label{
   transform: translate(0, -1px);
   user-select: none;
+}
+
+a{
+  text-decoration: none;
+  color: #42b983;
+  width: 100%;
+  text-align: center;
+}
+
+.err-log{
+  display: inline-block;
+  color: red;
+  font-size: 0.8rem;
+  margin-left: 5px;
+  margin-top: -0.6rem;
+  margin-bottom: 0.6rem;
 }
 </style>

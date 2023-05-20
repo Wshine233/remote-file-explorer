@@ -1,7 +1,7 @@
 <template>
-    <label :for="name" :class="{'label-focus': !idle}">{{ label }}</label>
+    <label :for="name" :class="{'label-focus': !idle, 'label-invalid': !isValid}">{{ label }}</label>
     <input v-model="value" :type="type" :name="name" ref="input" @focusin="isFocus = true" @focusout="isFocus = false">
-    <fieldset :class="{'fieldset-focus': isFocus}">
+    <fieldset :class="{'fieldset-focus': isFocus, 'fieldset-invalid': !isValid}">
       <legend :class="{'legend-hidden': idle}">{{ label }}</legend>
     </fieldset>
 </template>
@@ -13,7 +13,9 @@ export default {
     label: String,
     type: String,
     name: String,
+    validator: Function
   },
+  emits: ['inputChange'],
   data() {
     return{
       isFocus: false,
@@ -23,7 +25,17 @@ export default {
   computed: {
     idle() {
       return !this.isFocus && this.value.length === 0;
+    },
+    isValid(){
+      return this.value.length === 0 || !this.validator || this.validator && this.validator(this.value);
     }
+  },
+  watch: {
+    value(newVal) {
+      this.$emit('inputChange', newVal);
+    }
+  },
+  methods: {
   }
 }
 </script>
@@ -64,6 +76,8 @@ label{
   transform: translate(0, calc(-50% - 1px));
   transition: all 0.2s;
   z-index: 0;
+
+  user-select: none;
 }
 
 .label-focus{
@@ -71,6 +85,10 @@ label{
   margin-left: 12px;
   font-size: var(--small-font);
   z-index: 2;
+}
+
+.label-invalid{
+  color: red;
 }
 
 legend{
@@ -107,7 +125,7 @@ fieldset {
   border-style: solid;
 
   transform: translate(calc(0px - var(--border-normal)), calc(0px - var(--small-font) / 2));
-  /*transition: all 0.1s;*/
+  transition: border-color 0.3s;
 }
 
 .fieldset-focus {
@@ -116,6 +134,10 @@ fieldset {
   border-width: var(--border-focus);
 
   transform: translate(calc(0px - var(--border-focus)), calc(0px - var(--small-font) / 2));
+}
+
+.fieldset-invalid{
+  border-color: red;
 }
 
 </style>
