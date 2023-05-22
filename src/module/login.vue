@@ -27,6 +27,9 @@
 
 <script>
 import InputField from "@/components/InputField";
+import {requestLogin} from "@/user-manager";
+import {hashPassword} from "@/user-manager";
+
 export default {
   name: "LoginPage",
   components: {InputField},
@@ -42,11 +45,19 @@ export default {
     login(){
       this.getUsername();
       this.getPassword();
-      window.alert("username: " + this.username + "\npassword: " + this.password)
 
-      let confirm = true
-      if(confirm){
+      let m = this;
+      requestLogin(this.username, hashPassword(this.password))
+          .then(res => m.responseLogin(res))
+      this.$refs["err"].style.display = "none";
+    },
+    responseLogin(response){
+      let confirm = response.success;
+      this.errMsg = response.message;
+      if(!confirm){
         this.$refs["err"].style.display = "inline-block";
+      }else{
+        window.alert(response.message)
       }
     },
     getUsername(){
