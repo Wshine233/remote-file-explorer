@@ -27,8 +27,9 @@
 
 <script>
 import InputField from "@/components/InputField";
-import {requestLogin} from "@/user-manager";
+import {requestLogin, requestVerifySession} from "@/user-manager";
 import {hashPassword} from "@/user-manager";
+import {systemState} from "@/system";
 
 export default {
   name: "LoginPage",
@@ -66,6 +67,18 @@ export default {
     getPassword(){
       this.password = this.$refs.password.value;
     }
+  },
+  created() {
+    if(systemState.currentSession === undefined) return
+
+    requestVerifySession(systemState.currentSession)
+        .then(res => {
+          if(res.success){
+            window.location.href = "/";
+          }else{
+            window.alert(res.message);
+          }
+        })
   }
 }
 </script>

@@ -126,12 +126,12 @@ export class VirtualUserDatabase {
         return false
     }
 
-    static verifySession(userId, sessionId){
+    static verifySession(userId, sessionId, timeOnly = false){
         let session = this.getUserSession(sessionId)
         if(session === undefined){
             return false
         }
-        if(session.userId !== userId){
+        if(!timeOnly && session.userId !== userId){
             return false
         }
         if(session.sessionDate < Date.now()){
@@ -203,34 +203,52 @@ export class VirtualUserDatabase {
             permissionGroup: permissionGroup,
             permission: permission
         })
+        this.syncToLocalStorage()
         return buildResponsePacket(true, "注册成功")
     }
 
-    static updateUserInfo(userId, sessionId, infoKey, infoValue){
-        let user = this.getUserById(userId)
-        if(user === undefined){
-            return buildResponsePacket(false, "用户不存在")
-        }
-        if(!this.verifySession(userId, sessionId)){
+    static updateUserInfo(sessionId, infoKeys, infoValues){
+        let user = this.getUserBySession(sessionId)
+        if(!this.verifySession(null, sessionId, true)){
             return buildResponsePacket(false, "会话过期，请重新登录")
         }
-        if(infoKey === "passwordHash"){
-            return buildResponsePacket(false, "不允许修改密码，请使用专用接口")
+        for (let i = 0; i < infoKeys.length; i++){
+            if(infoKeys[i] === "passwordHash"){
+                return buildResponsePacket(false, "不允许修改密码")
+            }
+            user[infoKeys[i]] = infoValues[i]
         }
-        user[infoKey] = infoValue
         return buildResponsePacket(true, "修改成功")
     }
 
-    static updatePassword(id, session, hash) {
-        let user = this.getUserById(id)
-        if (user === undefined) {
-            return buildResponsePacket(false, "用户不存在")
-        }
-        if (!this.verifySession(id, session)) {
+    static updateUserPassword(sessionId, oldPasswordHash, newPasswordHash){
+        let user = this.getUserBySession(sessionId)
+        if(!this.verifySession(null, sessionId, true)){
             return buildResponsePacket(false, "会话过期，请重新登录")
         }
-        user.passwordHash = hash
-        return buildResponsePacket(true, "密码修改成功")
+        if(user.passwordHash !== oldPasswordHash){
+            return buildResponsePacket(false, "原密码错误")
+        }
+        user.passwordHash = newPasswordHash
+        return buildResponsePacket(true, "修改成功")
+    }
+
+    static getUserInfo(sessionId, infoKeys){
+        let user = this.getUserBySession(sessionId)
+        if(!this.verifySession(null, sessionId, true)){
+            return buildResponsePacket(false, "会话过期，请重新登录")
+        }
+        let infoValues = {}
+        for (let i = 0; i < infoKeys.length; i++){
+            if (infoKeys[i] === "passwordHash"){
+                return buildResponsePacket(false, "不允许获取密码")
+            }
+            if (user[infoKeys[i]] === undefined){
+                continue
+            }
+            infoValues[infoKeys[i]] = user[infoKeys[i]]
+        }
+        return buildResponsePacket(true, "获取成功", infoValues)
     }
 }
 
@@ -294,7 +312,6 @@ export function requestLogin(id, hash) {
     }
 }
 
-// eslint-disable-next-line no-unused-vars
 export function requestLoginBySession(sessionId){
     //TODO: 从后端数据库中获取session，验证合法性并返回登录结果
     if (systemState.globalSettings.virtualMode) {
@@ -307,7 +324,7 @@ export function requestLoginBySession(sessionId){
         })
     }else{
         axios.defaults.baseURL = systemState.globalSettings.backendUrl
-        let request = axios.post("/request/loginBySession", {
+        let request = axios.post("/request/session-login", {
             sessionId: sessionId
         })
         return new Promise((resolve) => {
@@ -328,6 +345,8 @@ export function requestLoginBySession(sessionId){
 }
 
 export function requestLogout(sessionId){
+    systemState.currentSession = undefined
+    syncState()
     if(systemState.globalSettings.virtualMode){
         return new Promise(resolve => {
             VirtualUserDatabase.logout(sessionId)
@@ -362,6 +381,111 @@ export function requestRegister(id, hash){
         let request = axios.post("/request/register", {
             id: id,
             hash: hash
+        })
+        return new Promise((resolve) => {
+            request.then(response => {
+                resolve(response.data)
+            }).catch(error => {
+                resolve({
+                    success: false,
+                    message: error.message,
+                    data: error
+                })
+            })
+        })
+    }
+}
+
+export function requestUpdateUserInfo(sessionId, infoKeys, infoValues){
+    if(systemState.globalSettings.virtualMode){
+        return new Promise(resolve => {
+            resolve(VirtualUserDatabase.updateUserInfo(sessionId, infoKeys, infoValues))
+        })
+    }else{
+        axios.defaults.baseURL = systemState.globalSettings.backendUrl
+        let request = axios.post("/request/update-user", {
+            sessionId: sessionId,
+            key: infoKeys,
+            value: infoValues
+        })
+        return new Promise((resolve) => {
+            request.then(response => {
+                resolve(response.data)
+            }).catch(error => {
+                resolve({
+                    success: false,
+                    message: error.message,
+                    data: error
+                })
+            })
+        })
+    }
+}
+
+export function requestUpdateUserPassword(sessionId, oldPasswordHash, newPasswordHash){
+    if(systemState.globalSettings.virtualMode){
+        return new Promise(resolve => {
+            resolve(VirtualUserDatabase.updateUserPassword(sessionId, oldPasswordHash, newPasswordHash))
+        })
+    }else{
+        axios.defaults.baseURL = systemState.globalSettings.backendUrl
+        let request = axios.post("/request/update-password", {
+            sessionId: sessionId,
+            oldHash: oldPasswordHash,
+            hash: newPasswordHash
+        })
+        return new Promise((resolve) => {
+            request.then(response => {
+                resolve(response.data)
+            }).catch(error => {
+                resolve({
+                    success: false,
+                    message: error.message,
+                    data: error
+                })
+            })
+        })
+    }
+}
+
+export function requestGetUserInfo(sessionId, infoKeys){
+    if(systemState.globalSettings.virtualMode){
+        return new Promise(resolve => {
+            resolve(VirtualUserDatabase.getUserInfo(sessionId, infoKeys))
+        })
+    }else{
+        axios.defaults.baseURL = systemState.globalSettings.backendUrl
+        let request = axios.post("/request/get-user-info", {
+            sessionId: sessionId,
+            key: infoKeys
+        })
+        return new Promise((resolve) => {
+            request.then(response => {
+                resolve(response.data)
+            }).catch(error => {
+                resolve({
+                    success: false,
+                    message: error.message,
+                    data: error
+                })
+            })
+        })
+    }
+}
+
+export function requestVerifySession(sessionId){
+    if(systemState.globalSettings.virtualMode){
+        return new Promise(resolve => {
+            if(VirtualUserDatabase.verifySession(null, sessionId, true)){
+                resolve(buildResponsePacket(true, "会话有效"))
+            }else{
+                resolve(buildResponsePacket(false, "会话已过期，请重新登录"))
+            }
+        })
+    }else{
+        axios.defaults.baseURL = systemState.globalSettings.backendUrl
+        let request = axios.post("/request/verify-session", {
+            sessionId: sessionId
         })
         return new Promise((resolve) => {
             request.then(response => {

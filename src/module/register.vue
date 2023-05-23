@@ -35,6 +35,8 @@
 
 <script>
 import InputField from "@/components/InputField.vue";
+import {requestRegister} from "@/user-manager";
+import {hashPassword} from "@/user-manager";
 
 export default {
   name: "RegisterPage",
@@ -94,7 +96,15 @@ export default {
         this.$refs["user-err"].style.display = "none";
         this.$refs["pass-err"].style.display = "none";
         this.$refs["confirm-err"].style.display = "none";
-        alert("注册成功")
+        requestRegister(this.username, hashPassword(this.password)).then(res => {
+          console.log(`Request result: ${res}`);
+          if(res.success){
+            alert("注册成功")
+          }else{
+            alert(`注册失败：${res.message}`)
+          }
+        })
+
       }
     }
   },
