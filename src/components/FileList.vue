@@ -16,6 +16,9 @@
 <script>
 import axios from "axios";
 
+const folderImg = new URL("../assets/folderIcon.svg", import.meta.url).href
+const logoImg = new URL("../assets/logo.png", import.meta.url).href
+
 export default {
   name: "FileList",
   data(){
@@ -39,9 +42,9 @@ export default {
   methods:{
     getIcon(type, name){
       if(type === 0){
-        return require("@/assets/folderIcon.svg")
+        return folderImg
       }else if(name !== ""){
-        return require("@/assets/logo.png")
+        return logoImg
       }
     },
     click(file){
@@ -154,7 +157,7 @@ export default {
     right: 0;
     margin-right: 20px;
 
-    background-image: url("~@/assets/more.svg");
+    background-image: url('@/assets/more.svg');
     background-repeat: no-repeat;
     background-size: contain;
     border: none;

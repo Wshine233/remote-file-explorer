@@ -19,7 +19,7 @@
         <button class="action-btn" type="submit" @click.prevent="login">登录</button>
       </div>
       <div>
-        <a href="register">没有账号？点击注册</a>
+        <a href="register.html">没有账号？点击注册</a>
       </div>
     </form>
   </div>

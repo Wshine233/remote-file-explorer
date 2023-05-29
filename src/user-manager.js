@@ -1,7 +1,6 @@
 import {syncToLocalStorage as syncState, systemState} from "@/system";
 import axios from "axios";
-
-let CryptoJS = require("crypto-js")
+import CryptoJs from "crypto-js";
 
 export class VirtualUserDatabase {
     static validSessionTime = 60000

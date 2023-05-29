@@ -3,8 +3,6 @@
   <p>{{ `This is index.html, ${userName}` }}</p>
   <a href="login" v-if="!loggedIn">Tap to login</a>
   <a style="display: block; cursor: pointer" v-if="loggedIn" @click="logout">Logout</a>
-  <van-button class="van-haptics-feedback btn">123</van-button>
-  <v-btn>123123</v-btn>
   <div id="file-list">
     <FileList/>
   </div>

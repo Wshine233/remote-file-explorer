@@ -27,7 +27,7 @@
         <button class="action-btn" type="submit" @click.prevent="submit">确认注册</button>
       </div>
       <div>
-        <a href="login">已有账号？点击登录</a>
+        <a href="login.html">已有账号？点击登录</a>
       </div>
     </form>
   </div>
