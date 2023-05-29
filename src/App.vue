@@ -1,12 +1,16 @@
 <template>
+<div>
   <p>{{ `This is index.html, ${userName}` }}</p>
   <a href="login" v-if="!loggedIn">Tap to login</a>
   <a style="display: block; cursor: pointer" v-if="loggedIn" @click="logout">Logout</a>
+  <FileListPage />
+</div>
 </template>
 
 <script>
 import {systemState, syncToLocalStorage as syncState} from "@/system";
 import {requestLoginBySession, requestGetUserInfo, requestLogout} from "@/user-manager";
+import FileListPage from "./components/FileListPage.vue";
 
 export default {
   name: "App",
@@ -26,6 +30,12 @@ export default {
         .then(res => m.responseLogin(res));
 
   },
+
+  //引入文件列表查看组件
+  components:{
+    FileListPage
+  },
+
   methods: {
     responseLogin(response) {
       if (response.success) {
@@ -34,7 +44,7 @@ export default {
       } else {
         systemState.currentSession = undefined;
         syncState();
-        window.alert(response.message);
+        //window.alert(response.message);
 
       }
     },
