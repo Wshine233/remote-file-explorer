@@ -21,3 +21,10 @@ pnpm-debug.log*
 *.njsproj
 *.sln
 *.sw?
+remote-file-explorer-backend/__pycache__/config.cpython-39.pyc
+remote-file-explorer-backend/__pycache__/crypto.cpython-39.pyc
+remote-file-explorer-backend/__pycache__/file_helper.cpython-39.pyc
+remote-file-explorer-backend/__pycache__/file_manager.cpython-39.pyc
+remote-file-explorer-backend/__pycache__/permission_manager.cpython-39.pyc
+remote-file-explorer-backend/__pycache__/response_helper.cpython-39.pyc
+remote-file-explorer-backend/__pycache__/user_manager.cpython-39.pyc

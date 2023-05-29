@@ -291,7 +291,7 @@ export function requestLogin(id, hash) {
     }else {
         //TODO: 从后端数据库中获取用户信息，验证用户身份并更新session与currentUser
         axios.defaults.baseURL = systemState.globalSettings.backendUrl
-        let request = axios.post("/request/login", {
+        let request = axios.post("/user/login", {
             id: id,
             hash: hash
         })
@@ -324,7 +324,7 @@ export function requestLoginBySession(sessionId){
         })
     }else{
         axios.defaults.baseURL = systemState.globalSettings.backendUrl
-        let request = axios.post("/request/session-login", {
+        let request = axios.post("/user/session-login", {
             sessionId: sessionId
         })
         return new Promise((resolve) => {
@@ -354,7 +354,7 @@ export function requestLogout(sessionId){
         })
     }else{
         axios.defaults.baseURL = systemState.globalSettings.backendUrl
-        let request = axios.post("/request/logout", {
+        let request = axios.post("/user/logout", {
             sessionId: sessionId
         })
         return new Promise((resolve) => {
@@ -378,7 +378,7 @@ export function requestRegister(id, hash){
         })
     }else{
         axios.defaults.baseURL = systemState.globalSettings.backendUrl
-        let request = axios.post("/request/register", {
+        let request = axios.post("/user/register", {
             id: id,
             hash: hash
         })
@@ -403,7 +403,7 @@ export function requestUpdateUserInfo(sessionId, infoKeys, infoValues){
         })
     }else{
         axios.defaults.baseURL = systemState.globalSettings.backendUrl
-        let request = axios.post("/request/update-user", {
+        let request = axios.post("/user/update-user", {
             sessionId: sessionId,
             key: infoKeys,
             value: infoValues
@@ -429,7 +429,7 @@ export function requestUpdateUserPassword(sessionId, oldPasswordHash, newPasswor
         })
     }else{
         axios.defaults.baseURL = systemState.globalSettings.backendUrl
-        let request = axios.post("/request/update-password", {
+        let request = axios.post("/user/update-password", {
             sessionId: sessionId,
             oldHash: oldPasswordHash,
             hash: newPasswordHash
@@ -455,7 +455,7 @@ export function requestGetUserInfo(sessionId, infoKeys){
         })
     }else{
         axios.defaults.baseURL = systemState.globalSettings.backendUrl
-        let request = axios.post("/request/get-user-info", {
+        let request = axios.post("/user/get-user", {
             sessionId: sessionId,
             key: infoKeys
         })
@@ -484,7 +484,7 @@ export function requestVerifySession(sessionId){
         })
     }else{
         axios.defaults.baseURL = systemState.globalSettings.backendUrl
-        let request = axios.post("/request/verify-session", {
+        let request = axios.post("/user/verify-session", {
             sessionId: sessionId
         })
         return new Promise((resolve) => {
