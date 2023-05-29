@@ -4,8 +4,11 @@ import user_manager as um
 import response_helper as rh
 import permission_manager as pm
 import file_manager as fm
+from flask_cors import CORS
 
 app = Flask(__name__)
+CORS(app)
+
 
 @app.route('/test/hello')
 def data():

@@ -1,5 +1,5 @@
 session_expire_time = 3600000
-use_ssl = True
+use_ssl = False
 ssl_context = ('remote-file-explorer-backend/cert/cert.crt', 'remote-file-explorer-backend/cert/ca/ca-key.pem')
 host = '0.0.0.0'
 port = 8512
