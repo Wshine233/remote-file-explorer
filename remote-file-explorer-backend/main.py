@@ -125,7 +125,17 @@ def get_user():
 
 @app.route('/user/verify-session', methods=['POST'])
 def verify_session():
-    pass
+    try:
+        data = request.get_json()
+        session = data.get('sessionId')
+        if session is None:
+            raise Exception('Request format error.')
+        if um.verify_session(session):
+            return rh.pack_response(True, 'Session valid.')
+        else:
+            return rh.pack_response(False, 'Session expired. Please login again.')
+    except Exception as e:
+        return rh.pack_response(False, 'Request error.', e)
 
 
 """ 文件请求部分 """
