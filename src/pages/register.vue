@@ -2,17 +2,17 @@
   <div id="register-panel">
     <h1>用户注册</h1>
     <form>
-      <span ref="user-err" class="err-log" style="display: none">{{errMsgUser}}</span>
+      <span ref="user-err" class="err-log" style="display: none">{{ errMsgUser }}</span>
       <div id="username-div" class="input-field">
         <InputField label="用户名" type="text" name="username" ref="username"
                     :validator="validateUsername" @inputChange="(name) => this.username = name"/>
       </div>
-      <span ref="pass-err" class="err-log" style="display: none">{{errMsgPass}}</span>
+      <span ref="pass-err" class="err-log" style="display: none">{{ errMsgPass }}</span>
       <div id="password-div" class="input-field">
         <InputField label="密码" type="password" name="password" ref="password"
                     :validator="validatePassword" @inputChange="(pass) => this.password = pass"/>
       </div>
-      <span ref="confirm-err" class="err-log" style="display: none">{{errMsgConfirm}}</span>
+      <span ref="confirm-err" class="err-log" style="display: none">{{ errMsgConfirm }}</span>
       <div id="password-confirm-div" class="input-field">
         <InputField label="确认密码" type="password" name="password" ref="password"
                     :validator="validatePasswordConfirm" @inputChange="(val) => this.passwordConfirm = val"/>
@@ -40,10 +40,10 @@ import {hashPassword} from "@/user-manager";
 
 export default {
   name: "RegisterPage",
-  components:{
+  components: {
     InputField
   },
-  data(){
+  data() {
     return {
       username: "",
       password: "",
@@ -54,53 +54,54 @@ export default {
     }
   },
   methods: {
-    popupProtocol(){
+    popupProtocol() {
       window.alert("这里以后要写一个弹出框组件代替alert");
     },
-    validateUsername(){
+    validateUsername() {
       return this.username.length >= 4;
     },
-    validatePassword(){
+    validatePassword() {
       return this.password.length >= 6 && this.password.length <= 16;
     },
-    validatePasswordConfirm(){
+    validatePasswordConfirm() {
       return this.password === this.passwordConfirm;
     },
-    submitValidate(){
+    submitValidate() {
       let valid = true;
-      if(!this.validateUsername()){
+      if (!this.validateUsername()) {
         this.errMsg = "用户名长度不得小于4";
         this.$refs['user-err'].style.display = "inline-block";
         valid = false;
-      }else{
+      } else {
         this.$refs['user-err'].style.display = "none";
       }
-      if(!this.validatePassword()){
+      if (!this.validatePassword()) {
         this.errMsg = "密码长度不得小于6或大于16";
         this.$refs["pass-err"].style.display = "inline-block";
         valid = false;
-      }else{
+      } else {
         this.$refs["pass-err"].style.display = "none";
       }
-      if(!this.validatePasswordConfirm()){
+      if (!this.validatePasswordConfirm()) {
         this.errMsg = "两次密码输入不一致";
         this.$refs["confirm-err"].style.display = "inline-block";
         valid = false;
-      }else{
+      } else {
         this.$refs["confirm-err"].style.display = "none";
       }
       return valid;
     },
-    submit(){
-      if(this.submitValidate()){
+    submit() {
+      if (this.submitValidate()) {
         this.$refs["user-err"].style.display = "none";
         this.$refs["pass-err"].style.display = "none";
         this.$refs["confirm-err"].style.display = "none";
         requestRegister(this.username, hashPassword(this.password)).then(res => {
           console.log(`Request result: ${res}`);
-          if(res.success){
+          if (res.success) {
             alert("注册成功")
-          }else{
+            window.location.href = "login.html"
+          } else {
             alert(`注册失败：${res.message}`)
           }
         })
@@ -185,7 +186,7 @@ a {
   text-align: center;
 }
 
-.err-log{
+.err-log {
   display: inline-block;
   color: red;
   font-size: 0.8rem;

@@ -59,6 +59,7 @@ export default {
         this.$refs["err"].style.display = "inline-block";
       }else{
         window.alert(response.message)
+        window.location.href = "/test.html";
       }
     },
     getUsername(){
@@ -74,9 +75,7 @@ export default {
     requestVerifySession(systemState.currentSession)
         .then(res => {
           if(res.success){
-            window.location.href = "/";
-          }else{
-            window.alert(res.message);
+            window.location.href = "/test.html";
           }
         })
   }

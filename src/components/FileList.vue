@@ -1,66 +1,237 @@
 <template id="body">
-  <div class="list-unit" v-for="file in fileList" :key="file.name">
-    <div class="bg" :style="{backgroundImage: `url(${getIcon(file.type, file.name)})`}"></div>
-    <div class="info-container">
-      <div class="info-title clickable" @click="click(file)">{{file.name}}</div>
-      <div class="info-detail">
-        <div class="info-time">{{file.time}}</div>
-        <div class="info-perm">{{file.perm}}</div>
+  <v-toolbar class="toolbar" color="primary" :elevation="2">
+    <v-btn icon="mdi-menu"></v-btn>
+    <v-toolbar-title>Files</v-toolbar-title>
+    <v-spacer></v-spacer>
+    <v-btn icon="mdi-view-list"></v-btn>
+    <v-btn icon="mdi-sort-variant"></v-btn>
+    <v-btn icon="mdi-dots-vertical"></v-btn>
+    <template v-slot:extension>
+      <v-breadcrumbs v-if="!selectMode" class="overflow-x-auto"
+                     :items="pathBreadcrumb"
+                     density="comfortable">
+        <template v-slot:title="{ item }">
+          <v-btn class="breadcrumb-btn" variant="text" size="small" density="comfortable" @click="changePath(item.path)">{{ item.name }}</v-btn>
+        </template>
+        <template v-slot:divider>
+          <div>/</div>
+        </template>
+      </v-breadcrumbs>
+      <div v-else class="breadcrumb-banner">
+        <span class="font-weight-bold">{{ selectCount }} file(s) selected.</span>
+        <v-btn @click="cancelSelect" style="position: absolute; top: 50%; right: 13px; transform: translate(0, -50%)"
+               icon="mdi-close" size="small"></v-btn>
       </div>
-    </div>
-    <button type="button" class="btn-menu"></button>
-    <div class="overlay" @click="click(file)"></div>
-  </div>
+
+    </template>
+  </v-toolbar>
+
+  <v-virtual-scroll id="list" item-height="60" :items="fileList">
+    <template v-slot:default="{item, index}">
+      <v-list-item variant="flat"
+                   :title="item.name"
+                   :value="item"
+                   :subtitle="item.time"
+                   density="comfortable"
+                   height="60"
+                   :class="{'user-select-disabled': true, 'item-selected': item.selected}"
+                   @click="click(item)"
+                   @touchstart="touchStart(item)"
+                   @touchmove="touchMove"
+                   @touchend="touchEnd">
+
+        <template v-slot:prepend>
+          <v-icon class="file-icon" style="margin-inline-end: 20px" :icon="getIcon(item.type, item.name)"
+                  size="42"></v-icon>
+        </template>
+
+        <template v-slot:append>
+          <v-btn variant="text" density="comfortable" icon="mdi-information" color="grey-lighten-1" @click.stop="clickInfo(item)"></v-btn>
+        </template>
+
+      </v-list-item>
+    </template>
+  </v-virtual-scroll>
+
+  <v-overlay :model-value="loading"
+             class="align-center justify-center"
+             @click:outside="loading = false">
+    <v-progress-circular
+      color="primary"
+      :indeterminate="true"
+      size="64"
+    ></v-progress-circular>
+  </v-overlay>
+
+  <v-dialog transition="dialog-bottom-transition"
+  width="auto"
+  v-model="dialog">
+    <v-card>
+      <v-card-text>
+        {{dialogInfo.text}}
+      </v-card-text>
+    </v-card>
+  </v-dialog>
+
+  <v-slide-y-reverse-transition>
+    <v-sheet v-if="selectMode" class="bottom-menu stay-top bottom-sticky">
+      <v-btn variant="text" :stacked="true" size="small" density="comfortable">
+        <v-icon>mdi-share</v-icon>
+        <span>Share</span>
+      </v-btn>
+
+      <v-btn variant="text" :stacked="true" size="small" density="comfortable">
+        <v-icon>mdi-file-move</v-icon>
+        <span>Move</span>
+      </v-btn>
+
+      <v-btn variant="text" :stacked="true" size="small" density="comfortable">
+        <v-icon>mdi-content-copy</v-icon>
+        <span>Copy</span>
+      </v-btn>
+
+      <v-btn variant="text" :stacked="true" size="small" density="comfortable">
+        <v-icon>mdi-delete</v-icon>
+        <span>Delete</span>
+      </v-btn>
+
+      <v-btn variant="text" :stacked="true" size="small" density="comfortable">
+        <v-icon>mdi-dots-horizontal</v-icon>
+        <span>More</span>
+      </v-btn>
+    </v-sheet>
+  </v-slide-y-reverse-transition>
+
+
 </template>
 
 <script>
 import axios from "axios";
-
-const folderImg = new URL("../assets/folderIcon.svg", import.meta.url).href
-const logoImg = new URL("../assets/logo.png", import.meta.url).href
+import {systemState} from "@/system";
 
 export default {
   name: "FileList",
-  data(){
-    return{
+  data() {
+    return {
       fileList: [
         {
           name: "Example Folder",
           type: 0,
           time: "2021-01-01 00:00:00",
-          perm: "adxms"
+          perm: "adxms",
+          selected: false
         },
         {
           name: "Example File",
           type: 1,
           time: "2021-01-01 00:00:00",
-          perm: "ad-ms"
+          perm: "ad-ms",
+          selected: false
         }
-      ]
+      ],
+      pathBreadcrumb: [
+        {
+          name: 'root',
+          path: '/'
+        },
+        {
+          name: 'Example Folder',
+          path: '/Example Folder'
+        }
+      ],
+      selectMode: false,
+      selectCount: 0,
+      path: '/',
+      loading: true,
+      dialog: false,
+      dialogInfo: {
+        text: "这是放置详细信息的界面"
+      }
     }
   },
-  methods:{
-    getIcon(type, name){
-      if(type === 0){
-        return folderImg
-      }else if(name !== ""){
-        return logoImg
+  methods: {
+    getIcon(type, name) {
+      if (type === 0) {
+        return "mdi-folder"
+      } else if (name !== "") {
+        return "mdi-file"
       }
     },
-    click(file){
-      window.alert(`你点击了: ${file.name}`)
+    changePath(path){
+      this.getFileList(path)
     },
-    getFileList(){
-      axios.defaults.baseURL = "http://127.0.0.1:8512"
+    updatePathBreadcrumb(){
+      let list = []
+      let path = this.path
+      while (path !== '/' && path !== '') {
+        let name = path.substr(path.lastIndexOf('/') + 1)
+        list.push({
+          name: name,
+          path: path
+        })
+        path = path.substr(0, path.lastIndexOf('/'))
+      }
+      list.push({
+        name: 'root',
+        path: '/'
+      })
+      list.reverse()
+      this.pathBreadcrumb = list
+    },
+    click(file) {
+      if (this.selectMode) {
+        this.updateSelect(file)
+      } else {
+        if (file.type === 0) {
+          this.changePath(this.path + (this.path === '/' ? file.name : '/' + file.name))
+        }
+      }
+    },
+    updateSelect(file) {
+      let cot = 0
+      file.selected = !file.selected
+      for (const file of this.fileList) {
+        if (file.selected) {
+          cot++;
+        }
+      }
+      this.selectCount = cot
+    },
+    cancelSelect() {
+      this.selectMode = false
+      for (const file of this.fileList) {
+        file.selected = false
+      }
+    },
+    touchStart(file) {
+      this.holdTimeout = setTimeout(() => {
+        this.selectMode = true
+        this.updateSelect(file)
+      }, 700)
+    },
+    touchEnd() {
+      clearTimeout(this.holdTimeout)
+    },
+    touchMove() {
+      clearTimeout(this.holdTimeout)
+    },
+    clickInfo(file){
+      this.dialog = true
+      this.dialogInfo.text = `这是关于${file.name}的详细信息`
+    },
+    getFileList(path) {
+      this.loading = true
+      console.log(`正在获取${path}下的文件列表`)
+      axios.defaults.baseURL = systemState.globalSettings.backendUrl
       axios.post('/file/list-file', {
-        sessionId: "f6adf99f-f32c-417a-ae0f-bb97e6a05bc6",
-        path: "/临时工作间",
+        sessionId: systemState.currentSession,
+        path: path,
       }).then(res => {
         console.log(res)
         res = res.data
         let list = []
-        if(res.success){
-          for(let file of res.data){
+        if (res.success) {
+          for (let file of res.data) {
             list.push({
               name: file.path.substr(file.path.lastIndexOf('/') + 1),
               type: file.type,
@@ -68,146 +239,98 @@ export default {
               perm: "adxms"
             })
           }
+          if(!this.loading){
+            return
+          }
+          this.path = path
+          window.location.href = "#/file?path=" + path
           this.fileList = list
-        }else{
+          this.updatePathBreadcrumb()
+          this.loading = false
+        } else {
           window.alert(res.message)
         }
+      }).catch(err => {
+        console.log(err)
+        window.alert(err)
       })
     }
-  },
-  created() {
-    this.getFileList()
   }
 
 }
 </script>
 
 <style scoped>
-  #body{
-    width: 100%;
-    height: 100%;
-  }
+#body {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
 
-  .list-unit{
-    position: relative;
-    width: 100%;
-    height: 100px;
+*{
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
 
-    display: flex;
-    flex-direction: row;
-    /*justify-content: space-between;*/
-    align-items: center;
+.file-icon {
+  width: 40px;
+  margin-inline-end: 20px;
+}
 
-    padding: 20px;
-    box-sizing: border-box;
+.breadcrumb-btn {
+  min-width: 0;
+  padding: 0 10px;
+}
 
-    background-color: aliceblue;
-  }
+#list {
+  /* 高度不超过屏幕底端 */
+  max-height: calc(100vh - 112px);
+}
 
-  .bg{
-    width: 60px;
-    height: 60px;
-    background-repeat: no-repeat;
-    background-size: contain;
-    flex-grow: 0;
-    flex-shrink: 0;
+.toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 10086;
+}
 
-    margin-right: 20px;
-  }
+.user-select-disabled {
+  user-select: none;
+}
 
-  .info-container{
-    width: calc(100% - 60px - 20px - 20px - 30px);
+.item-selected {
+  background-color: #a0a0a0;
+}
 
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
+.breadcrumb-banner {
+  position: relative;
+  width: 100%;
+  padding-left: 24px;
+}
 
-    height: calc(100% - 10px);
-  }
+.stay-top{
+  z-index: 10086;
+}
 
-  .info-title{
-    font-size: 20px;
-    font-weight: bold;
-    user-select: none;
-    flex-shrink: 1;
+.bottom-sticky{
+  position: sticky;
+  bottom: 0;
+}
 
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-  }
+.bottom-menu{
+  padding: 10px 10px;
+  background-color: #ffffff;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
 
-  .info-detail{
-    display: flex;
-    flex-direction: row;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
 
-    color: gray;
-    font-size: 14px;
-  }
-
-  .info-perm{
-    margin-left: 10px;
-  }
-
-  .btn-menu{
-    margin-left: 20px;
-    width: 30px;
-    height: 30px;
-    flex-shrink: 0;
-    position: absolute;
-    right: 0;
-    margin-right: 20px;
-
-    background-image: url('@/assets/more.svg');
-    background-repeat: no-repeat;
-    background-size: contain;
-    border: none;
-    background-color: transparent;
-
-    transition: filter 0.2s;
-    z-index: 1;
-  }
-
-  .btn-menu:hover{
-    cursor: pointer;
-    filter: brightness(1.3);
-  }
-
-  .btn-menu:active{
-    filter: brightness(0.8);
-  }
-
-  .clickable{
-    transition: color 0.2s;
-  }
-
-  .clickable:hover{
-    color: #1890ff;
-    cursor: pointer;
-  }
-
-  .overlay{
-    width: 100%;
-    height: 100%;
-    position: absolute;
-    left: 0;
-    top: 0;
-
-    cursor: pointer;
-
-    transition: all 0.2s;
-  }
-
-  .overlay:hover{
-    background-color: rgba(0,0,0,0.1);
-  }
-
-  .overlay:active{
-    background-color: rgba(0,0,0,0.2);
-  }
-
-  .btn-menu:hover + .overlay{
-    background-color: rgba(0,0,0,0.1);
-  }
-
-
+.bottom-menu > *{
+  flex-grow: 1;
+}
 </style>
