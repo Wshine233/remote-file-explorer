@@ -1,11 +1,46 @@
 <template id="body">
+  <UserDrawer ref="userDrawer" :user-info="userInfo"/>
+  <ViewSelectDialog ref="viewSelector" />
+  <SortSelectDialog ref="sortSelector" />
+  <Settings ref="setting" />
+
   <v-toolbar class="toolbar" color="primary" :elevation="2">
-    <v-btn icon="mdi-menu"></v-btn>
+    <v-btn icon="mdi-menu" @click="showDrawer"></v-btn>
     <v-toolbar-title>Files</v-toolbar-title>
     <v-spacer></v-spacer>
-    <v-btn icon="mdi-view-list"></v-btn>
-    <v-btn icon="mdi-sort-variant"></v-btn>
-    <v-btn icon="mdi-dots-vertical"></v-btn>
+    <v-btn icon="mdi-view-list" @click="showViewSelector"></v-btn>
+    <v-btn icon="mdi-sort-variant" @click="showSortSelector"></v-btn>
+    <v-btn icon="mdi-dots-vertical">
+      <v-icon>mdi-dots-vertical</v-icon>
+      <v-menu activator="parent" z-index="10087">
+        <v-list>
+          <v-list-item title="Create Folder" value="download" density="comfortable">
+            <template v-slot:prepend>
+              <v-icon style="margin-inline-end: 10px" icon="mdi-folder-plus-outline"
+                      size="26"></v-icon>
+            </template>
+          </v-list-item>
+          <v-list-item title="Upload File" value="upload" density="comfortable">
+            <template v-slot:prepend>
+              <v-icon style="margin-inline-end: 10px" icon="mdi-upload"
+                      size="26"></v-icon>
+            </template>
+          </v-list-item>
+          <v-list-item title="Add Mount" value="move" density="comfortable">
+            <template v-slot:prepend>
+              <v-icon style="margin-inline-end: 10px" icon="mdi-plus-box-outline"
+                      size="26"></v-icon>
+            </template>
+          </v-list-item>
+          <v-list-item title="Settings" value="playlist" density="comfortable" color="important" @click="showSettings">
+            <template v-slot:prepend>
+              <v-icon style="margin-inline-end: 10px" icon="mdi-cog"
+                      size="26"></v-icon>
+            </template>
+          </v-list-item>
+        </v-list>
+      </v-menu>
+    </v-btn>
     <template v-slot:extension>
       <v-breadcrumbs v-if="!selectMode" class="overflow-x-auto"
                      :items="pathBreadcrumb"
@@ -26,32 +61,7 @@
     </template>
   </v-toolbar>
 
-  <v-virtual-scroll id="list" item-height="60" :items="fileList">
-    <template v-slot:default="{item, index}">
-      <v-list-item variant="flat"
-                   :title="item.name"
-                   :value="item"
-                   :subtitle="item.time"
-                   density="comfortable"
-                   height="60"
-                   :class="{'user-select-disabled': true, 'item-selected': item.selected}"
-                   @click="click(item)"
-                   @touchstart="touchStart(item)"
-                   @touchmove="touchMove"
-                   @touchend="touchEnd">
-
-        <template v-slot:prepend>
-          <v-icon class="file-icon" style="margin-inline-end: 20px" :icon="getIcon(item.type, item.name)"
-                  size="42"></v-icon>
-        </template>
-
-        <template v-slot:append>
-          <v-btn variant="text" density="comfortable" icon="mdi-information" color="grey-lighten-1" @click.stop="clickInfo(item)"></v-btn>
-        </template>
-
-      </v-list-item>
-    </template>
-  </v-virtual-scroll>
+  <FileListView :file-list="fileList" :select-mode="selectMode" @clickInfo="clickInfo" @clickItem="click" @holdItem="hold"/>
 
   <v-overlay :model-value="loading"
              class="align-center justify-center"
@@ -63,43 +73,10 @@
     ></v-progress-circular>
   </v-overlay>
 
-  <v-dialog transition="dialog-bottom-transition"
-  width="auto"
-  v-model="dialog">
-    <v-card>
-      <v-card-text>
-        {{dialogInfo.text}}
-      </v-card-text>
-    </v-card>
-  </v-dialog>
+  <DetailDialog ref="detail" />
 
   <v-slide-y-reverse-transition>
-    <v-sheet v-if="selectMode" class="bottom-menu stay-top bottom-sticky">
-      <v-btn variant="text" :stacked="true" size="small" density="comfortable">
-        <v-icon>mdi-share</v-icon>
-        <span>Share</span>
-      </v-btn>
-
-      <v-btn variant="text" :stacked="true" size="small" density="comfortable">
-        <v-icon>mdi-file-move</v-icon>
-        <span>Move</span>
-      </v-btn>
-
-      <v-btn variant="text" :stacked="true" size="small" density="comfortable">
-        <v-icon>mdi-content-copy</v-icon>
-        <span>Copy</span>
-      </v-btn>
-
-      <v-btn variant="text" :stacked="true" size="small" density="comfortable">
-        <v-icon>mdi-delete</v-icon>
-        <span>Delete</span>
-      </v-btn>
-
-      <v-btn variant="text" :stacked="true" size="small" density="comfortable">
-        <v-icon>mdi-dots-horizontal</v-icon>
-        <span>More</span>
-      </v-btn>
-    </v-sheet>
+    <ToolbarAction v-if="selectMode" :select-list="selectList" :base="path" ref="actions"/>
   </v-slide-y-reverse-transition>
 
 
@@ -108,9 +85,17 @@
 <script>
 import axios from "axios";
 import {systemState} from "@/system";
+import ToolbarAction from "@/components/ToolbarAction";
+import FileListView from "@/components/FileListView";
+import UserDrawer from "@/components/UserDrawer";
+import ViewSelectDialog from "@/components/ViewSelectDialog";
+import SortSelectDialog from "@/components/SortSelectDialog";
+import DetailDialog from "@/components/DetailDialog";
+import Settings from "@/components/Settings";
 
 export default {
   name: "FileList",
+  components: {Settings, DetailDialog, SortSelectDialog, ViewSelectDialog, UserDrawer, FileListView, ToolbarAction},
   data() {
     return {
       fileList: [
@@ -118,17 +103,19 @@ export default {
           name: "Example Folder",
           type: 0,
           time: "2021-01-01 00:00:00",
-          perm: "adxms",
           selected: false
         },
         {
           name: "Example File",
           type: 1,
           time: "2021-01-01 00:00:00",
-          perm: "ad-ms",
           selected: false
         }
       ],
+      userInfo: {
+        name: 'Wshine',
+        group: 'admin'
+      },
       pathBreadcrumb: [
         {
           name: 'root',
@@ -140,23 +127,18 @@ export default {
         }
       ],
       selectMode: false,
+      selectList: [],
       selectCount: 0,
       path: '/',
       loading: true,
       dialog: false,
       dialogInfo: {
         text: "这是放置详细信息的界面"
-      }
+      },
+      drawer: false
     }
   },
   methods: {
-    getIcon(type, name) {
-      if (type === 0) {
-        return "mdi-folder"
-      } else if (name !== "") {
-        return "mdi-file"
-      }
-    },
     changePath(path){
       this.getFileList(path)
     },
@@ -187,15 +169,28 @@ export default {
         }
       }
     },
+    hold(file){
+      if(this.selectMode) return
+      this.setSelectMode()
+      this.updateSelect(file)
+    },
+    setSelectMode(enable = true){
+      this.selectMode = enable
+    },
     updateSelect(file) {
-      let cot = 0
       file.selected = !file.selected
+      let selectList = this.getSelectList()
+      this.selectList = selectList
+      this.selectCount = selectList.length
+    },
+    getSelectList(){
+      let result = []
       for (const file of this.fileList) {
         if (file.selected) {
-          cot++;
+          result.push(file)
         }
       }
-      this.selectCount = cot
+      return result
     },
     cancelSelect() {
       this.selectMode = false
@@ -203,21 +198,23 @@ export default {
         file.selected = false
       }
     },
-    touchStart(file) {
-      this.holdTimeout = setTimeout(() => {
-        this.selectMode = true
-        this.updateSelect(file)
-      }, 700)
-    },
-    touchEnd() {
-      clearTimeout(this.holdTimeout)
-    },
-    touchMove() {
-      clearTimeout(this.holdTimeout)
-    },
     clickInfo(file){
-      this.dialog = true
-      this.dialogInfo.text = `这是关于${file.name}的详细信息`
+      this.showDetail(file)
+    },
+    showDrawer(){
+      this.$refs.userDrawer.drawer = true
+    },
+    showViewSelector(){
+      this.$refs.viewSelector.dialog = true
+    },
+    showSortSelector(){
+      this.$refs.sortSelector.dialog = true
+    },
+    showDetail(file){
+      this.$refs.detail.dialog = true
+    },
+    showSettings(){
+      this.$refs.setting.dialog = true
     },
     getFileList(path) {
       this.loading = true
@@ -232,11 +229,23 @@ export default {
         let list = []
         if (res.success) {
           for (let file of res.data) {
+            let time = 'unknown'
+            if(file.time !== null){
+              time = new Date(parseInt((file.time * 1000).toString()))
+              console.log(file)
+              const year = time.getFullYear().toString().padStart(4, '0');
+              const month = (time.getMonth() + 1).toString().padStart(2, '0');
+              const day = time.getDate().toString().padStart(2, '0');
+              const hour = time.getHours().toString().padStart(2, '0');
+              const minute = time.getMinutes().toString().padStart(2, '0');
+              const second = time.getSeconds().toString().padStart(2, '0');
+              time = `${year}-${month}-${day} ${hour}:${minute}:${second}`
+            }
             list.push({
               name: file.path.substr(file.path.lastIndexOf('/') + 1),
               type: file.type,
-              time: "2021-01-01 00:00:00",
-              perm: "adxms"
+              time: time,
+              perm: file.perm
             })
           }
           if(!this.loading){
@@ -255,8 +264,12 @@ export default {
         window.alert(err)
       })
     }
+  },
+  watch: {
+    drawer(newValue){
+      this.$refs.userDrawer.drawer = newValue
+    }
   }
-
 }
 </script>
 
@@ -276,33 +289,15 @@ export default {
   user-select: none;
 }
 
-.file-icon {
-  width: 40px;
-  margin-inline-end: 20px;
-}
-
 .breadcrumb-btn {
   min-width: 0;
   padding: 0 10px;
 }
 
-#list {
-  /* 高度不超过屏幕底端 */
-  max-height: calc(100vh - 112px);
-}
-
 .toolbar {
   position: sticky;
   top: 0;
-  z-index: 10086;
-}
-
-.user-select-disabled {
-  user-select: none;
-}
-
-.item-selected {
-  background-color: #a0a0a0;
+  z-index: 2;
 }
 
 .breadcrumb-banner {
@@ -313,24 +308,5 @@ export default {
 
 .stay-top{
   z-index: 10086;
-}
-
-.bottom-sticky{
-  position: sticky;
-  bottom: 0;
-}
-
-.bottom-menu{
-  padding: 10px 10px;
-  background-color: #ffffff;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.bottom-menu > *{
-  flex-grow: 1;
 }
 </style>

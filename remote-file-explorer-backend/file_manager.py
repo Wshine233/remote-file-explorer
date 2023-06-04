@@ -9,9 +9,9 @@ import data_serialize_helper as dsh
 
 # 挂载列表
 mounts = {
-    Path('D:/[]临时工作间'): {
-        'target': 'D:/[]临时工作间',   # 被挂载的目录/文件位置，必须是绝对路径且唯一；启动时会检查是否存在；
-        'root': '/临时工作间',   # 挂载到的路径，必须以/开头，且唯一；一个挂载点只能挂载一个目录/文件; 不能直接挂载到'/'
+    Path('D:/Unity 3D/Projects'): {
+        'target': 'D:/Unity 3D/Projects',   # 被挂载的目录/文件位置，必须是绝对路径且唯一；启动时会检查是否存在；
+        'root': '/Unity 3D/Unity 项目',   # 挂载到的路径，必须以/开头，且唯一；一个挂载点只能挂载一个目录/文件; 不能直接挂载到'/'
     },
     Path('D:/_Pictures/【图片】'): {
         'target': 'D:/_Pictures/【图片】',
@@ -21,8 +21,8 @@ mounts = {
 
 # 文件权限列表
 perms = {
-    Path('D:/[]临时工作间'): {
-        'file': 'D:/[]临时工作间',   # 目标目录/文件的绝对路径
+    Path('D:/Unity 3D/Projects'): {
+        'file': 'D:/Unity 3D/Projects',   # 目标目录/文件的绝对路径
         'visibleGroup': ['admin', 'restrict'],   # 可见的权限组
         'visibleUser': ['admin'],   # 可见的用户，覆盖权限组规则
         'invisibleUser': ['user1'],   # 不可见的用户，覆盖权限组规则
@@ -35,7 +35,7 @@ perms = {
             {
                 'type': 0,
                 'target': 'restrict',
-                'permission': '-----'
+                'permission': 'adxm-'
             }
         ]
     },
@@ -56,6 +56,13 @@ perms = {
                 'permission': '-----'
             }
         ]
+    },
+    Path('D:/_Pictures/【图片】/download/你看不见我哦♡'): {
+        'file': 'D:/_Pictures/【图片】/download/你看不见我哦♡',
+        'visibleGroup': [],
+        'visibleUser': [],
+        'invisibleUser': [],
+        'rules': []
     }
 }
 
@@ -63,6 +70,35 @@ perms = {
 ignores = [
     Path('D:/test/ignore').resolve()
 ]
+
+
+
+def get_files_from_mounts(target: Path):
+    """根据mounts挂载的path列表推断出指定路径下有哪些文件 
+
+    这些文件都是挂载时形成的，可能实际并不存在，但需要一个虚拟路径。
+    例如: 假设挂载列表里只有一个挂载, 将D:/folder目录挂载到了/test/test_folder目录。
+    此时, /test/test_folder目录是可以被正常映射至D:/folder的, /test目录则无法找到映射, 因为它本身并没有作为其它文件的挂载点。
+    但由于有目录挂载到了/test的子目录, 所以/test也必须在文件列表中存在
+    """
+    target = Path(target)
+    result = []
+    paths = [Path(mount['root']) for mount in mounts.values()]
+    for path in paths:
+        if path.parent.is_relative_to(target):
+            real_path = get_file_real_path(path)
+            if real_path is None:
+                continue
+
+            is_dir = real_path.is_dir()
+            while path.parent.resolve() != target.resolve():
+                is_dir = True
+                path = path.parent
+            result.append({
+                'name': path.name,
+                'type': 0 if is_dir else 1
+            })
+    return result
 
 
 def get_file_real_path(path, check_exists=True):
@@ -205,11 +241,43 @@ def user_visible(path, user_id):
     return visible
 
 
+def user_visible_by_parent(path, user_id, parent_visible: bool):
+    """事先得到父目录是否可见的结果，避免重复计算"""
+    if not parent_visible:
+        return False
+    
+    path = Path(path)
+    real_path = get_file_real_path(path)
+    if real_path is None:
+        return False
+    if real_path in ignores:
+        return False
+    
+    user_perm = pm.get_user_permission(user_id)
+    user_group = um.get_user_info(user_id, ['permissionGroup'])['permissionGroup']
+    if user_perm is None:
+        return False
+    
+    if real_path in perms:
+        file_perm = perms[real_path]
+        group_test = user_group in file_perm['visibleGroup']
+        user_test = user_id in file_perm['visibleUser']
+        block_test = user_id in file_perm['invisibleUser']
+        if not block_test and (group_test or user_test):
+            # 文件可以看见
+            return True
+        # 文件不可见
+        return False
+    # 文件没有权限设置，使用父目录的结果
+    return parent_visible
+
+
 def get_file_permission(path, user_id):
+    """获取指定文件的权限"""
     path = Path(path)
     real_path = get_file_real_path(path, check_exists=False)
     if real_path is None:
-        return None
+        return '-----'
 
     user_info = um.get_user_info(user_id, ['permission', 'permissionGroup'])
     user_perm = user_info['permission']
@@ -241,14 +309,56 @@ def get_file_permission(path, user_id):
     return result
 
 
+def get_file_permission_by_parent(path, user_id, parent_perm: str, real_path=None, parent_visible=None, visible=None):
+    """获取指定文件的权限，事先得到父目录的权限，避免重复计算"""
+    path = Path(path)
+    if real_path is None:
+        real_path = get_file_real_path(path, check_exists=False)
+    if real_path is None:
+        return '-----'
+
+    user_info = um.get_user_info(user_id, ['permission', 'permissionGroup'])
+    user_perm = user_info['permission']
+    user_group = user_info['permissionGroup']
+    group_perm = pm.get_group_permission(user_group)
+    
+    if visible is None:
+        visible = user_visible_by_parent(path, user_id, parent_visible)
+    if not visible:
+        return "-----"
+    
+    perm = parent_perm
+    if real_path not in perms:
+        return perm
+    
+    file_perm = perms[real_path]
+    group_rule = group_perm
+    user_rule = user_perm
+    for rule in file_perm['rules']:
+        if rule['type'] == 0 and rule['target'] == user_group:
+            group_rule = rule['permission']
+        if rule['type'] == 1 and rule['target'] == user_id:
+            user_rule = rule['permission']
+    
+    result = pm.merge_permission(group_perm, group_rule)
+    user_perm = pm.merge_permission(user_perm, user_rule)
+    result = pm.merge_permission(result, user_perm)
+    return result
+
+
 def get_file_info(paths: list, keys: list, user_id: str):
     ls = []
     for path in paths:
         real_path = get_file_real_path(path)
         if real_path is None:
-            return None
+            info = {'path': path}
+            for key in keys:
+                info[key] = None
+            ls.append(info)
+            continue
         
         info = {}
+        info['path'] = path
         for key in keys:
             if key == 'permission':
                 info[key] = get_file_permission(path, user_id)
@@ -466,20 +576,31 @@ def copy_file(path, new_path, user_id):
 
 
 def list_root_file(user_id):
-    result = []
-    for mount in mounts.values():
-        root = mount['root']
-        if root.count('/') > 1:
+    result = {}
+    
+    for file in get_files_from_mounts(Path('/')):
+        path = '/' + file['name']
+        real_path = get_file_real_path(path)
+        if real_path is not None and not user_visible('/'+ file['name'], user_id):
             continue
-        if not user_visible(root, user_id):
-            continue
-        real_path = get_file_real_path(root)
-        if real_path is None:
-            continue
-        result.append({
-            'path': root,
-            'type': 0 if real_path.is_dir() else 1,
-        })
+
+        time = None
+        if real_path is not None:
+            time = fh.get_file_last_modified(real_path)
+        
+        perm = get_file_permission_by_parent(path, user_id, '-----',
+                                             real_path=real_path, parent_visible=True,
+                                             visible=True)
+
+        result[path] = {
+            'path': path,
+            'type': file['type'],
+            'time': time,
+            'perm': perm
+        }
+    
+    result = list(result.values())
+    result.sort(key=lambda x: str(x['path']))
 
     return result
 
@@ -489,23 +610,53 @@ def list_file(user_id, parent):
         return list_root_file(user_id)
     parent = Path(parent)
     real_path = get_file_real_path(parent)
-    if real_path is None:
-        return []
-    if not real_path.is_dir():
+    if real_path is not None and not real_path.is_dir():
         return []
     
-    ls = os.listdir(str(real_path))
-    result = []
-    for f in ls:
-        path = parent / f
-        if user_visible(path, user_id):
-            path = str(path).replace('\\', '/')
-            real = real_path / f
-            type = 0 if real.is_dir() else 1
-            result.append({
-                'path': path,
-                'type': type,
-            })
+    result = {}
+    if real_path is not None:
+        ls = os.listdir(str(real_path))
+        parent_visible = user_visible(parent, user_id)
+        parent_perm = get_file_permission(parent, user_id)
+        for f in ls:
+            path = parent / f
+            if user_visible_by_parent(path, user_id, parent_visible):
+                path = fh.to_path_str(path)
+                real = real_path / f
+                type = 0 if real.is_dir() else 1
+
+                time = None
+                if real is not None:
+                    time = fh.get_file_last_modified(real)
+                
+                perm = get_file_permission_by_parent(path, user_id, parent_perm, real_path=real, parent_visible=parent_visible, visible=True)
+
+                result[path] = {
+                    'path': path,
+                    'type': type,
+                    'time': time,
+                    'perm': perm
+                }
+    
+    for file in get_files_from_mounts(parent):
+        path = str(parent / file['name']).replace('\\', '/')
+        real = get_file_real_path(path)
+
+        time = None
+        if real is not None:
+            time = fh.get_file_last_modified(real)
+
+        result[path] = {
+            'path': path,
+            'type': file['type'],
+            'time': time,
+            'perm': '-----'  # 挂载路径是虚拟的，没有权限
+        }
+    
+    result = list(result.values())
+    if len(result) > 0:
+        result.sort(key=lambda x: str(x['path']))
+
     return result
 
 

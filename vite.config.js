@@ -15,9 +15,9 @@ export default defineConfig({
   build: {
     rollupOptions: {
       input: {
-        index: resolve('src/pages/hello.html'),
-        login: resolve('src/pages/login.html'), //key随意的，不影响
-        register: resolve('src/pages/register.html'),  //key随意的，不影响
+        index: resolve('src/pages'),
+        // login: resolve('src/pages/login.html'), //key随意的，不影响
+        // register: resolve('src/pages/register.html'),  //key随意的，不影响
       }
     }
   },

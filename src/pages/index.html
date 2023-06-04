@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Welcome</title>
+</head>
+<body>
+    <a href="test.html"> Redirect to Test Page </a>
+    <div id="location"></div>
+
+    <script>
+        document.getElementById('location').innerHTML = window.location.pathname
+        if(window.location.pathname === '/test'){
+            window.location.href = 'test.html'
+        }
+    </script>
+</body>
+</html>

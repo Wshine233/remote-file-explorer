@@ -1,93 +1,109 @@
 <template>
-  <v-card class="mx-auto" max-width="400">
-    <v-toolbar color="purple">
-      <v-btn icon="mdi-menu"></v-btn>
+  <v-dialog v-model="backendDialog">
+    <v-card title="Set Value">
+      <v-card-text>
+        <v-text-field v-model="backendUrlEdit" label="Backend URL" hint="Backend server's address (e.g. http://127.0.0.1:1080)" clearable></v-text-field>
+      </v-card-text>
+      <v-card-actions>
+        <v-spacer></v-spacer>
+        <v-btn @click="saveUrlEdit">Save</v-btn>
+      </v-card-actions>
+    </v-card>
+  </v-dialog>
+  <v-dialog
+    v-model="dialog"
+    fullscreen
+    :scrim="false"
+    transition="dialog-bottom-transition">
 
-      <v-toolbar-title>Settings</v-toolbar-title>
-
-      <v-spacer></v-spacer>
-
-      <v-btn icon="mdi-magnify"></v-btn>
-    </v-toolbar>
-
-    <v-list lines="three">
-      <v-list-subheader>User Controls</v-list-subheader>
-
-      <v-list-item value="Content Filtering">
-        <v-list-item-title>Content filtering</v-list-item-title>
-
-        <v-list-item-subtitle>
-          Set the content filtering level to restrict appts that can be
-          downloaded
-        </v-list-item-subtitle>
-      </v-list-item>
-
-      <v-list-item value="Password">
-        <v-list-item-title>Password</v-list-item-title>
-
-        <v-list-item-subtitle>
-          Require password for purchase or use password to restrict purchase
-        </v-list-item-subtitle>
-      </v-list-item>
-    </v-list>
-
-    <v-divider></v-divider>
-
-    <v-list lines="three" select-strategy="classic">
-      <v-list-subheader>General</v-list-subheader>
-
-      <v-list-item value="notifications">
-        <template v-slot:prepend="{ isActive }">
-          <v-list-item-action start>
-            <v-checkbox-btn :model-value="isActive"></v-checkbox-btn>
-          </v-list-item-action>
-        </template>
-
-        <v-list-item-title>Notifications</v-list-item-title>
-
-        <v-list-item-subtitle>
-          Notify me about updates to apps or games that I downloaded
-        </v-list-item-subtitle>
-      </v-list-item>
-
-      <v-list-item value="sound">
-        <template v-slot:prepend="{ isActive }">
-          <v-list-item-action start>
-            <v-checkbox-btn :model-value="isActive"></v-checkbox-btn>
-          </v-list-item-action>
-        </template>
-
-        <v-list-item-title>Sound</v-list-item-title>
-
-        <v-list-item-subtitle>
-          Auto-update apps at any time. Data charges may apply
-        </v-list-item-subtitle>
-      </v-list-item>
-
-      <v-list-item value="widgets">
-        <template v-slot:prepend="{ isActive }">
-          <v-list-item-action start>
-            <v-checkbox-btn :model-value="isActive"></v-checkbox-btn>
-          </v-list-item-action>
-        </template>
-
-        <v-list-item-title>Auto-add widgets</v-list-item-title>
-
-        <v-list-item-subtitle>
-          Automatically add home screen widgets when downloads complete
-        </v-list-item-subtitle>
-      </v-list-item>
-    </v-list>
-  </v-card>
+    <v-card>
+      <v-toolbar
+        dark
+        color="primary"
+      >
+        <v-btn
+          icon
+          dark
+          @click="dialog = false"
+        >
+          <v-icon>mdi-close</v-icon>
+        </v-btn>
+        <v-toolbar-title>Settings</v-toolbar-title>
+      </v-toolbar>
+      <v-list
+        lines="two" subheader>
+        <v-list-subheader>Local</v-list-subheader>
+        <v-list-item value="backend-url" @click="showUrlEdit">
+          <template #title>
+            <v-list-item-title>Backend URL</v-list-item-title>
+            <v-list-item-subtitle>{{ backendUrl }}</v-list-item-subtitle>
+          </template>
+        </v-list-item>
+      </v-list>
+      <v-divider></v-divider>
+      <v-list
+        lines="two"
+        subheader
+      >
+        <v-list-subheader>General</v-list-subheader>
+        <v-list-item title="Notifications" subtitle="Notify me about updates to apps or games that I downloaded">
+          <template v-slot:prepend>
+            <v-checkbox v-model="notifications" class="list-switch"></v-checkbox>
+          </template>
+        </v-list-item>
+        <v-list-item title="Sound" subtitle="Auto-update apps at any time. Data charges may apply">
+          <template v-slot:prepend>
+            <v-checkbox v-model="sound" class="list-switch"></v-checkbox>
+          </template>
+        </v-list-item>
+        <v-list-item title="Auto-add widgets" subtitle="Automatically add home screen widgets">
+          <template v-slot:prepend>
+            <v-checkbox v-model="widgets" class="list-switch"></v-checkbox>
+          </template>
+        </v-list-item>
+      </v-list>
+    </v-card>
+  </v-dialog>
 </template>
 
 
 <script>
+import {systemState} from "@/system";
+
 export default {
-  name: "Settings"
+  name: "Settings",
+  data() {
+    return {
+      dialog: false,
+      backendDialog: false,
+      backendUrl: "",
+      backendUrlEdit: "",
+    }
+  },
+  computed: {
+  },
+  methods:{
+    showUrlEdit(){
+      this.backendDialog = true
+      this.backendUrlEdit = this.backendUrl
+    },
+    saveUrlEdit(){
+      this.backendUrl = this.backendUrlEdit
+      this.backendDialog = false
+    }
+  },
+  watch: {
+    dialog(val){
+      if(val){
+        this.backendUrl = systemState.globalSettings.backendUrl
+      }
+    }
+  }
 }
 </script>
 
 <style scoped>
-
+.list-switch{
+  display: flex;
+}
 </style>

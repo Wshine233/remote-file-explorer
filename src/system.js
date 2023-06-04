@@ -19,7 +19,7 @@ function initState() {
     localStorage.setItem("system-state", JSON.stringify(defaultState))
   }
   systemState.globalSettings.virtualMode = false
-  systemState.globalSettings.backendUrl = "http://10.17.41.213:8512"
+  systemState.globalSettings.backendUrl = "http://localhost:8512"
 }
 
 export function syncToLocalStorage() {

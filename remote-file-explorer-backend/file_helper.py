@@ -117,3 +117,7 @@ def copy_file(path: Path, new_path: Path):
 
 def same_path(path1: Path, path2: Path):
     return path1.resolve() == path2.resolve()
+
+
+def to_path_str(path: Path):
+    return str(path).replace('\\', '/')

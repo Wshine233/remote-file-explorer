@@ -245,6 +245,35 @@ def manage():
     pass
 
 
+@app.route('/file/perm', methods=['POST'])
+def get_perm():
+    try:
+        data = request.get_json()
+        session = data.get('sessionId')
+        paths = data.get('paths')
+        if session is None or paths is None:
+            raise Exception('Request format error.')
+        
+        user = um.verify_session(session)
+        if user:
+            user = um.get_user_id(session)
+            if user is None:
+                return rh.pack_response(False, 'Unknown error. User not found.')
+        else:
+            return rh.pack_response(False, 'Session expired. Please login again.')
+        
+        result = []
+        for path in paths:
+            result.append({
+                'path': path,
+                'perm': fm.get_file_permission(path, user)
+            })
+        if result is None:
+            return rh.pack_response(False, 'File not found.')
+        return rh.pack_response(True, 'Success.', result)
+    except Exception as e:
+        return rh.pack_response(False, 'Request error.', e)
+
 
 if __name__ == '__main__':
     if cfg.use_ssl:
