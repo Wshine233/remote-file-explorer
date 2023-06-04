@@ -76,7 +76,7 @@
   <DetailDialog ref="detail" />
 
   <v-slide-y-reverse-transition>
-    <ToolbarAction v-if="selectMode" :select-list="selectList" :base="path" ref="actions"/>
+    <ToolbarAction v-if="selectMode" :select-list="selectList" :base="path" ref="actions" @selectAll="selectAll" @selectInvert="selectInvert"/>
   </v-slide-y-reverse-transition>
 
 
@@ -215,6 +215,20 @@ export default {
     },
     showSettings(){
       this.$refs.setting.dialog = true
+    },
+    selectAll(){
+      for (const file of this.fileList) {
+        file.selected = true
+      }
+      this.selectList = this.getSelectList()
+      this.selectCount = this.selectList.length
+    },
+    selectInvert(){
+      for (const file of this.fileList) {
+        file.selected = !file.selected
+      }
+      this.selectList = this.getSelectList()
+      this.selectCount = this.selectList.length
     },
     getFileList(path) {
       this.loading = true

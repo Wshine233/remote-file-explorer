@@ -37,10 +37,20 @@
                       size="24"></v-icon>
             </template>
           </v-list-item>
-          <v-list-item title="Set Permission" value="playlist" density="comfortable" color="important">
+          <v-list-item title="Set Permission" value="perm" density="comfortable" color="important">
             <template v-slot:prepend>
               <v-icon style="margin-inline-end: 10px" icon="mdi-playlist-plus"
                       size="26" color="important"></v-icon>
+            </template>
+          </v-list-item>
+          <v-list-item title="Select All" value="select-all" density="comfortable" @click="selectAll">
+            <template v-slot:prepend>
+              <v-icon style="margin-inline-end: 10px" size="26" color="warning">mdi-select-all</v-icon>
+            </template>
+          </v-list-item>
+          <v-list-item title="Select Invert" value="select-invert" density="comfortable" @click="selectInvert">
+            <template v-slot:prepend>
+              <v-icon style="margin-inline-end: 10px" size="26" color="warning">mdi-select-inverse</v-icon>
             </template>
           </v-list-item>
         </v-list>
@@ -58,6 +68,7 @@ import {systemState} from "@/system";
 export default {
   name: "ToolbarAction",
   props: ['selectList', 'base'],
+  emits: ['selectAll', 'selectInvert'],
   data() {
     return {
       permission: '-----'
@@ -114,6 +125,12 @@ export default {
       }
       this.permission = result
     },
+    selectAll(){
+      this.$emit('selectAll')
+    },
+    selectInvert(){
+      this.$emit('selectInvert')
+    }
   },
   watch: {
     selectList() {
