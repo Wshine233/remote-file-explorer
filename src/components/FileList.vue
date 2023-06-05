@@ -85,6 +85,7 @@
 <script>
 import axios from "axios";
 import {systemState} from "@/system";
+import {getTimeStr} from "@/utils";
 import ToolbarAction from "@/components/ToolbarAction";
 import FileListView from "@/components/FileListView";
 import UserDrawer from "@/components/UserDrawer";
@@ -135,7 +136,8 @@ export default {
       dialogInfo: {
         text: "这是放置详细信息的界面"
       },
-      drawer: false
+      drawer: false,
+      fileInfo: null
     }
   },
   methods: {
@@ -211,7 +213,12 @@ export default {
       this.$refs.sortSelector.dialog = true
     },
     showDetail(file){
-      this.$refs.detail.dialog = true
+      this.$refs.detail.fileInfo = {
+        path: this.path + (this.path === '/' ? file.name : '/' + file.name),
+        type: file.type,
+        name: file.name
+      }
+      this.$refs.detail.show = true
     },
     showSettings(){
       this.$refs.setting.dialog = true
@@ -245,15 +252,7 @@ export default {
           for (let file of res.data) {
             let time = 'unknown'
             if(file.time !== null){
-              time = new Date(parseInt((file.time * 1000).toString()))
-              console.log(file)
-              const year = time.getFullYear().toString().padStart(4, '0');
-              const month = (time.getMonth() + 1).toString().padStart(2, '0');
-              const day = time.getDate().toString().padStart(2, '0');
-              const hour = time.getHours().toString().padStart(2, '0');
-              const minute = time.getMinutes().toString().padStart(2, '0');
-              const second = time.getSeconds().toString().padStart(2, '0');
-              time = `${year}-${month}-${day} ${hour}:${minute}:${second}`
+              time = getTimeStr(file.time)
             }
             list.push({
               name: file.path.substr(file.path.lastIndexOf('/') + 1),

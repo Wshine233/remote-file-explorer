@@ -1,5 +1,5 @@
 <template>
-  <v-sheet class="bottom-menu bottom-sticky">
+  <v-sheet class="bottom-menu bottom-sticky" color="surface">
     <v-btn variant="text" :stacked="true" size="small" density="comfortable" :disabled="!canShare">
       <v-icon>mdi-share</v-icon>
       <span>Share</span>

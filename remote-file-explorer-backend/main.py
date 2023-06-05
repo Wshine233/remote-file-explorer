@@ -140,7 +140,7 @@ def verify_session():
 
 """ 文件请求部分 """
 
-@app.route('/file/get-info', methods=['POST'])
+@app.route('/file/info', methods=['POST'])
 def get_file():
     try:
         data = request.get_json()
@@ -158,7 +158,7 @@ def get_file():
         else:
             return rh.pack_response(False, 'Session expired. Please login again.')
         
-        result = fm.get_file_info(paths, keys)
+        result = fm.get_file_info(paths, keys, user)
         if result is None:
             return rh.pack_response(False, 'File not found.')
         return rh.pack_response(True, f'Success. Got {len(result)} item(s).', result)

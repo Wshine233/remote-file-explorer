@@ -26,6 +26,21 @@ const lightTheme = {
   }
 }
 
+const darkTheme = {
+  dark: true,
+  colors: {
+    background: '#000000',
+    surface: '#212121',
+    primary: '#535353',
+    secondary: '#2f2f2f',
+    error: '#B00020',
+    info: '#2196F3',
+    success: '#4CAF50',
+    warning: '#FB8C00',
+    'important': '#e51b3f',
+  }
+}
+
 // https://vuetifyjs.com/en/introduction/why-vuetify/#feature-guides
 /*export default createVuetify({
   theme: {
@@ -41,9 +56,9 @@ const lightTheme = {
 })*/
 export default createVuetify({
   theme: {
-    defaultTheme: 'lightTheme',
+    defaultTheme: localStorage.getItem('theme') ? localStorage.getItem('theme') : 'lightTheme',
     themes: {
-      lightTheme
+      lightTheme, darkTheme
     }
   },
 })
