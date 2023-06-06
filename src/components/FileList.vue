@@ -3,6 +3,7 @@
   <ViewSelectDialog ref="viewSelector" />
   <SortSelectDialog ref="sortSelector" />
   <Settings ref="setting" />
+  <SearchDialog ref="search" />
 
   <v-toolbar class="toolbar" color="primary" :elevation="2">
     <v-btn icon="mdi-menu" @click="showDrawer"></v-btn>
@@ -14,6 +15,12 @@
       <v-icon>mdi-dots-vertical</v-icon>
       <v-menu activator="parent" z-index="10087">
         <v-list>
+          <v-list-item title="Search" value="search" density="comfortable" @click="showSearch">
+            <template v-slot:prepend>
+              <v-icon style="margin-inline-end: 10px" icon="mdi-magnify"
+                      size="26"></v-icon>
+            </template>
+          </v-list-item>
           <v-list-item title="Create Folder" value="download" density="comfortable">
             <template v-slot:prepend>
               <v-icon style="margin-inline-end: 10px" icon="mdi-folder-plus-outline"
@@ -93,10 +100,13 @@ import ViewSelectDialog from "@/components/ViewSelectDialog";
 import SortSelectDialog from "@/components/SortSelectDialog";
 import DetailDialog from "@/components/DetailDialog";
 import Settings from "@/components/Settings";
+import SearchDialog from "@/components/SearchDialog";
 
 export default {
   name: "FileList",
-  components: {Settings, DetailDialog, SortSelectDialog, ViewSelectDialog, UserDrawer, FileListView, ToolbarAction},
+  components: {
+    SearchDialog,
+    Settings, DetailDialog, SortSelectDialog, ViewSelectDialog, UserDrawer, FileListView, ToolbarAction},
   data() {
     return {
       fileList: [
@@ -222,6 +232,9 @@ export default {
     },
     showSettings(){
       this.$refs.setting.dialog = true
+    },
+    showSearch(){
+      this.$refs.search.dialog = true
     },
     selectAll(){
       for (const file of this.fileList) {

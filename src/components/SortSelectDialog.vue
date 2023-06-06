@@ -56,6 +56,12 @@
               filter
               variant="outlined"
             >
+              Folder
+            </v-chip>
+            <v-chip
+              filter
+              variant="outlined"
+            >
               Picture
             </v-chip>
             <v-chip
