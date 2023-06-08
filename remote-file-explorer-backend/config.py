@@ -15,3 +15,6 @@ session_data_path = 'remote-file-explorer-backend/data/sessions'
 
 permission_group_path = 'remote-file-explorer-backend/data/permission_groups'
 default_group = 'restrict'
+
+log_path = 'remote-file-explorer-backend/data/log'
+log_expire_time = 7*24*3600*1000 # 7 days

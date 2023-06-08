@@ -1,4 +1,5 @@
 import user_manager as um
+import data_serialize_helper as dsh
 import config as cfg
 
 
@@ -12,6 +13,15 @@ permission_groups = [
         'permission': "-----"
     }
 ]
+
+
+def load_data():
+    global permission_groups
+    permission_groups = dsh.deserialize_groups(None, cfg.permission_group_path, defaultValue=dsh.format_groups(permission_groups))
+
+
+def save_data():
+    dsh.serialize_groups(permission_groups, cfg.permission_group_path)
 
 
 def get_group_permission(id):
@@ -62,6 +72,7 @@ def add_group(id, permission):
         'id': id,
         'permission': permission
     })
+    save_data()
     return True
 
 
@@ -69,6 +80,7 @@ def remove_group(id):
     for group in permission_groups:
         if group['id'] == id:
             permission_groups.remove(group)
+            save_data()
             return True
     return False
 
@@ -78,6 +90,7 @@ def update_group(id, permission):
     if group is None:
         return False
     group['permission'] = permission
+    save_data()
     return True
 
 
@@ -90,3 +103,7 @@ def check_permission(permission, check):
         return False
     # 如果包含权限继承，由于未提供上层权限，也记作无权限
     return check in permission
+
+
+
+load_data()

@@ -26,7 +26,7 @@
 
 <script>
 import {systemState} from "@/system";
-import {getTimeStr} from "@/utils";
+import {getReadableSize, getTimeStr} from "@/utils";
 import axios from "axios";
 
 export default {
@@ -118,7 +118,7 @@ export default {
             },
             {
               key: "Size",
-              value: this.file.file_size === null ? 'Invalid' : this.file.file_size
+              value: getReadableSize(parseInt(this.file.file_size))
             },
             {
               key: "Type",

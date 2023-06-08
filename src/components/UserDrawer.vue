@@ -1,5 +1,5 @@
 <template>
-  <v-layout style="z-index: 10088;">
+  <v-layout style="z-index: 10086;">
     <v-navigation-drawer v-model="drawer" temporary>
       <v-list-item
         :title="userInfo.name"
@@ -17,6 +17,7 @@
       <v-list density="compact" nav>
         <v-list-item prepend-icon="mdi-view-dashboard" title="Profile" value="profile" @click="clickItem('profile')"></v-list-item>
         <v-list-item prepend-icon="mdi-history" title="History" value="history" @click="clickItem('history')"></v-list-item>
+        <v-list-item prepend-icon="mdi-share" title="Sharing" value="sharing" @click="clickItem('sharing')"></v-list-item>
         <v-list-item prepend-icon="mdi-bell-outline" title="Notification" value="notification" @click="clickItem('notification')">
           <template #append>
             <v-badge v-if="unread > 0" :color="unreadColor" :content="unread" inline></v-badge>
@@ -44,6 +45,7 @@
   <ProfileDialog ref="profile" />
   <HistoryDialog ref="history" />
   <NotificationDialog ref="notification" />
+  <SharingDialog ref="sharing" />
 </template>
 
 <script>
@@ -52,10 +54,11 @@ import { useTheme } from 'vuetify'
 import {syncToLocalStorage, systemState} from "@/system";
 import HistoryDialog from "@/components/HistoryDialog";
 import NotificationDialog from "@/components/NotificationDialog";
+import SharingDialog from "@/components/SharingDialog";
 
 export default {
   name: "UserDrawer",
-  components: {NotificationDialog, HistoryDialog, ProfileDialog},
+  components: {SharingDialog, NotificationDialog, HistoryDialog, ProfileDialog},
   props: ['userInfo'],
   setup(){
     const theme = useTheme()
@@ -88,6 +91,8 @@ export default {
         this.logout()
       }else if(item === 'notification'){
         this.$refs.notification.dialog = true
+      }else if(item === 'sharing'){
+        this.$refs.sharing.dialog = true
       }
     },
     logout(){

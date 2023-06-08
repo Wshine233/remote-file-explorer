@@ -11,8 +11,9 @@
       </v-card-title>
       <v-timeline side="end" style="padding-right: 24px">
         <v-timeline-item v-for="item in history" :key="item.timeStr" :dot-color="item.type" size="small">
-          <v-alert :value="true" :color="item.type" :icon="item.icon" density="compact">
-            <v-alert-title>{{ item.timeStr }} {{ item.action }} By @{{ item.userId }}</v-alert-title>
+          <v-alert :value="true" :color="item.type" :icon="item.icon" density="compact" style="font-size: 14px">
+            <v-alert-title style="font-size: 18px">{{ item.timeStr }}</v-alert-title>
+            <v-alert-title style="font-size: 16px">{{ item.action }}</v-alert-title>
             {{ item.message }}
           </v-alert>
         </v-timeline-item>
@@ -37,14 +38,14 @@ export default {
           timeStr: "2021-01-01 00:08:00",
           action: "Delete",
           userId: "wshine",
-          message: "Delete file: /Example Folder/Example File"
+          message: "Delete file: /Example Folder/Example File/Long Name File Example to Test Overflow.png"
         },
         {
           id: 1,
           type: 'success',
           icon: 'mdi-login',
           timeStr: "2021-01-01 00:00:00",
-          action: "login",
+          action: "Login",
           userId: 'wshine',
           message: "Successfully login."
         },
@@ -53,7 +54,7 @@ export default {
           type: 'success',
           icon: 'mdi-login',
           timeStr: "2021-01-01 00:00:00",
-          action: "login",
+          action: "Login",
           userId: 'wshine',
           message: "Successfully login."
         },
@@ -62,7 +63,7 @@ export default {
           type: 'success',
           icon: 'mdi-login',
           timeStr: "2021-01-01 00:00:00",
-          action: "login",
+          action: "Login",
           userId: 'wshine',
           message: "Successfully login."
         },
@@ -71,7 +72,7 @@ export default {
           type: 'success',
           icon: 'mdi-login',
           timeStr: "2021-01-01 00:00:00",
-          action: "login",
+          action: "Login",
           userId: 'wshine',
           message: "Successfully login."
         },
@@ -80,7 +81,7 @@ export default {
           type: 'success',
           icon: 'mdi-login',
           timeStr: "2021-01-01 00:00:00",
-          action: "login",
+          action: "Login",
           userId: 'wshine',
           message: "Successfully login."
         },
@@ -89,7 +90,7 @@ export default {
           type: 'success',
           icon: 'mdi-login',
           timeStr: "2021-01-01 00:00:00",
-          action: "login",
+          action: "Login",
           userId: 'wshine',
           message: "Successfully login."
         },
@@ -98,7 +99,7 @@ export default {
           type: 'success',
           icon: 'mdi-login',
           timeStr: "2021-01-01 00:00:00",
-          action: "login",
+          action: "Login",
           userId: 'wshine',
           message: "Successfully login."
         },
@@ -107,7 +108,7 @@ export default {
           type: 'success',
           icon: 'mdi-login',
           timeStr: "2021-01-01 00:00:00",
-          action: "login",
+          action: "Login",
           userId: 'wshine',
           message: "Successfully login."
         },
@@ -116,7 +117,7 @@ export default {
           type: 'success',
           icon: 'mdi-login',
           timeStr: "2021-01-01 00:00:00",
-          action: "login",
+          action: "Login",
           userId: 'wshine',
           message: "Successfully login."
         },
@@ -125,7 +126,7 @@ export default {
           type: 'success',
           icon: 'mdi-login',
           timeStr: "2021-01-01 00:00:00",
-          action: "login",
+          action: "Login",
           userId: 'wshine',
           message: "Successfully login."
         },

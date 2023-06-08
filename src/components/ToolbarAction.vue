@@ -1,6 +1,6 @@
 <template>
   <v-sheet class="bottom-menu bottom-sticky" color="surface">
-    <v-btn variant="text" :stacked="true" size="small" density="comfortable" :disabled="!canShare">
+    <v-btn variant="text" :stacked="true" size="small" density="comfortable" :disabled="!canShare" @click="showShare">
       <v-icon>mdi-share</v-icon>
       <span>Share</span>
     </v-btn>
@@ -58,15 +58,17 @@
     </v-btn>
   </v-sheet>
 
-
+  <ShareDrawer ref="share" />
 </template>
 
 <script>
 import axios from "axios";
 import {systemState} from "@/system";
+import ShareDrawer from "@/components/ShareDrawer";
 
 export default {
   name: "ToolbarAction",
+  components: {ShareDrawer},
   props: ['selectList', 'base'],
   emits: ['selectAll', 'selectInvert'],
   data() {
@@ -130,6 +132,9 @@ export default {
     },
     selectInvert(){
       this.$emit('selectInvert')
+    },
+    showShare(){
+      this.$refs.share.show()
     }
   },
   watch: {
@@ -148,7 +153,7 @@ export default {
 .bottom-sticky {
   position: sticky;
   bottom: 0;
-  z-index: 10086;
+  z-index: 2;
 }
 
 .bottom-menu {

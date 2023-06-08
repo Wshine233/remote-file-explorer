@@ -5,6 +5,7 @@ import os
 import config as cfg
 import file_helper as fh
 import data_serialize_helper as dsh
+import search_helper as sh
 
 
 # 挂载列表
@@ -35,7 +36,7 @@ perms = {
             {
                 'type': 0,
                 'target': 'restrict',
-                'permission': 'adxm-'
+                'permission': 'adxms'
             }
         ]
     },
@@ -71,6 +72,38 @@ ignores = [
     Path('D:/test/ignore').resolve()
 ]
 
+
+
+def load_data():
+    # 读取mount列表
+    global mounts
+    cache = mounts
+    mounts = {}
+    m = dsh.deserialize_mounts(None, load_path=cfg.mount_data_path, defaultValue=dsh.format_mounts(cache))
+    valid = True
+    for mount in m.values():
+        if not validate_mount(mount['target'], mount['root']):
+            valid = False
+            target = mount['target']
+            print(f'Mount {target} is invalid.')
+            break
+    if valid:
+        mounts = m
+    else:
+        mounts = cache
+    
+    # 读取权限列表
+    global perms
+    perms = dsh.deserialize_perms(None, load_path=cfg.perm_data_path, defaultValue=dsh.format_perms(perms))
+
+    # 读取忽略列表
+    global ignores
+    ignores = dsh.deserialize_ignores(None, load_path=cfg.ignore_data_path, defaultValue=dsh.format_ignores(ignores))
+
+
+def save_data():
+    dsh.serialize_mounts(mounts, save_path=cfg.mount_data_path)
+    dsh.serialize_perms(perms, save_path=cfg.perm_data_path)
 
 
 def get_files_from_mounts(target: Path):
@@ -116,6 +149,7 @@ def get_file_real_path(path, check_exists=True):
 
 
 def validate_mount(target: Path, root):
+    target = Path(target)
     # 检查该文件是否存在
     if not Path(target).exists():
         return False
@@ -147,6 +181,8 @@ def add_mount(target: Path, root):
 
     if target in ignores:
         ignores.remove(target)
+    
+    save_data()
 
     return True
 
@@ -156,6 +192,7 @@ def remove_mount(target: Path):
         return False
 
     del mounts[target]
+    save_data()
 
     return True
 
@@ -412,12 +449,14 @@ def update_rule(perm, rule):
         if r['type'] == rule['type'] and r['target'] == rule['target']:
             r['permission'] = rule['permission']
     perm['rules'].append(rule)
+    save_data()
 
 
 def remove_rule(perm, type, target):
     for r in perm['rules']:
         if r['type'] == type and r['target'] == target:
             perm['rules'].remove(r)
+    save_data()
 
 
 def get_permission(path, default=None):
@@ -439,6 +478,7 @@ def add_permission_rule(path, rule):
     perm = get_permission(path, generate_default_permission(path))
     update_rule(perm, rule)
     perms[real_path] = perm
+    save_data()
 
 
 def remove_permission_rule(path, type, target):
@@ -450,22 +490,55 @@ def remove_permission_rule(path, type, target):
     perm = get_permission(path, generate_default_permission(path))
     remove_rule(perm, type, target)
     perms[real_path] = perm
+    save_data()
 
 
 def update_permission_rule(path, rule):
     return add_permission_rule(path, rule)
 
 
+def add_visibility_rule(path, key: str, value: str):
+    path = Path(path)
+    real_path = get_file_real_path(path)
+    if real_path is None:
+        return False
+    
+    perm = perms[real_path]
+    if key not in perm:
+        return False
+    if value in perm[key]:
+        return False
+    perm[key].append(value)
+    save_data()
+
+
+def remove_visibility_rule(path, key: str, value: str):
+    path = Path(path)
+    real_path = get_file_real_path(path)
+    if real_path is None:
+        return False
+    
+    perm = perms[real_path]
+    if key not in perm:
+        return False
+    if value not in perm[key]:
+        return False
+    perm[key].remove(value)
+    save_data()
+
+
 def add_ignore(target):
     target = Path(target).resolve()
     if target not in ignores:
         ignores.append(target)
+    save_data()
 
 
 def remove_ignore(target):
     target = Path(target).resolve()
     if target in ignores:
         ignores.remove(target)
+    save_data()
 
 
 def get_ignore():
@@ -585,8 +658,12 @@ def list_root_file(user_id):
             continue
 
         time = None
+        size = None
+        time_created = None
         if real_path is not None:
             time = fh.get_file_last_modified(real_path)
+            size = fh.get_file_size(real_path)
+            time_created = fh.get_file_created(real_path)
         
         perm = get_file_permission_by_parent(path, user_id, '-----',
                                              real_path=real_path, parent_visible=True,
@@ -596,6 +673,8 @@ def list_root_file(user_id):
             'path': path,
             'type': file['type'],
             'time': time,
+            'time_created': time_created,
+            'size': size,
             'perm': perm
         }
     
@@ -626,8 +705,12 @@ def list_file(user_id, parent):
                 type = 0 if real.is_dir() else 1
 
                 time = None
+                time_created = None
+                size = None
                 if real is not None:
                     time = fh.get_file_last_modified(real)
+                    time_created = fh.get_file_created(real)
+                    size = fh.get_file_size(real)
                 
                 perm = get_file_permission_by_parent(path, user_id, parent_perm, real_path=real, parent_visible=parent_visible, visible=True)
 
@@ -635,6 +718,8 @@ def list_file(user_id, parent):
                     'path': path,
                     'type': type,
                     'time': time,
+                    'time_created': time_created,
+                    'size': size,
                     'perm': perm
                 }
     
@@ -643,14 +728,24 @@ def list_file(user_id, parent):
         real = get_file_real_path(path)
 
         time = None
+        time_created = None
+        size = None
+        perm = '-----'
         if real is not None:
+            if not user_visible_by_parent(path, user_id, True):
+                continue
+            size = fh.get_file_size(real)
             time = fh.get_file_last_modified(real)
+            time_created = fh.get_file_created(real)
+            perm = get_file_permission_by_parent(path, user_id, '-----', real_path=real, parent_visible=True, visible=True)
 
         result[path] = {
             'path': path,
             'type': file['type'],
             'time': time,
-            'perm': '-----'  # 挂载路径是虚拟的，没有权限
+            'time_created': time_created,
+            'size': size,
+            'perm': perm  # 挂载路径是虚拟的，没有权限
         }
     
     result = list(result.values())
@@ -660,24 +755,83 @@ def list_file(user_id, parent):
     return result
 
 
-def share_file(path, share_options: dict):
-    # TODO: 建立分享系统后再编写
-    pass
+def get_file_type(path):
+    path = Path(path)
+    real_path = get_file_real_path(path)
+    if real_path is None:
+        return None
+    
+    if real_path.is_dir():
+        return 0
+    else:
+        return 1
 
 
-def load_data():
-    global mounts
-    m = dsh.deserialize_mounts(None, load_path=cfg.mount_data_path)
-    valid = True
-    for mount in m.values():
-        if not validate_mount(m['target'], m['root']):
-            valid = False
-            target = m['target']
-            print(f'Mount {target} is invalid.')
-            break
-    if valid:
-        mounts = m
+def get_file_size(path):
+    path = Path(path)
+    real_path = get_file_real_path(path)
+    if real_path is None:
+        return None
+    
+    return fh.get_file_size(real_path)
 
 
-def save_data():
-    dsh.serialize_mounts(mounts, save_path=cfg.mount_data_path)
+def get_file_time_modified(path):
+    path = Path(path)
+    real_path = get_file_real_path(path)
+    if real_path is None:
+        return None
+    
+    return fh.get_file_last_modified(real_path)
+
+
+def get_search_result_unit(file):
+    return {
+        'path': file['path'],
+        'name': file['path'].split('/')[-1],
+        'type': file['type'],
+        'time_modified': file['time'],
+        'time_created': file['time_created'],
+        'size': file['size'],
+        'perm': file['perm']
+    }
+
+
+def find_file_in_path(user_id, keyword, path, recursive=False):
+    path = Path(path)
+    
+    files = list_file(user_id, path)
+    result = []
+    for file in files:
+        if recursive and file['type'] == 0:
+            result += find_file_in_path(user_id, keyword, file['path'], recursive)
+        
+        if keyword in file['path'].split('/')[-1]:
+            result.append(get_search_result_unit(file))
+
+    return result
+    
+
+def find_file(user_id, keyword, filter: dict):
+    if filter.get('folder', None) is None:
+        filter['folder'] = '/'
+    if filter.get('recursive', None) is None:
+        filter['recursive'] = False
+    if filter.get('type', None) is None:
+        filter['type'] = [0, 1]
+    
+    result = find_file_in_path(user_id, keyword, filter['folder'], recursive=filter['recursive'])
+    result = sh.filter_type(result, filter['type'])
+
+    if filter.get('ext', None) is not None:
+        result = sh.filter_extention(result, filter['ext'], 0 in filter['type'], filter['ext_blacklist'])
+    if filter.get('time_modified', None) is not None:
+        result = sh.filter_modified_time(result, filter['time_modified'][0], filter['time_modified'][1])
+    if filter.get('time_created', None) is not None:
+        result = sh.filter_created_time(result, filter['time_created'][0], filter['time_created'][1])
+    
+    return result
+
+
+
+load_data()

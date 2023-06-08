@@ -10,11 +10,11 @@
             </v-expansion-panel-title>
             <v-expansion-panel-text>
               <v-text-field v-model="searchDir"
-                            :label="`Filter Dir (${searchDirInvert ? 'black list' : 'white list'})`"
-                            :hint="`Folders you ${searchDirInvert ? 'DON\'T' : ''} want to search. (Divide with '|')`"
-                            placeholder="e.g.  D:/test/folder | C:/folder/path "
+                            :label="`Filter Dir`"
+                            :hint="`Folder you want to search.`"
+                            placeholder="e.g.  /test/folder"
                             variant="underlined"></v-text-field>
-              <v-switch v-model="searchDirInvert" label="Use Black List" density="compact"></v-switch>
+              <v-switch v-model="searchDirRecursive" label="Recursive" density="compact"></v-switch>
             </v-expansion-panel-text>
           </v-expansion-panel>
 
@@ -72,7 +72,7 @@
             </v-expansion-panel-text>
           </v-expansion-panel>
 
-          <v-expansion-panel value="create">
+          <v-expansion-panel value="created">
             <v-expansion-panel-title class="font-weight-bold" expand-icon="mdi-filter-variant-plus"
                                      collapse-icon="mdi-close">Create Time
             </v-expansion-panel-title>
@@ -113,13 +113,14 @@ import {getDateTimeStr} from "@/utils";
 
 export default {
   name: "FilterDialog",
+  emits: ['save'],
   components: {DateTimePicker},
   data() {
     return {
       dialog: false,
       filters: [],
       searchDir: '',  // 在以下目录搜索，多个目录用分号分隔（'D:/asdasd; C:/asdaSd'） 当前在哪个目录就会默认添加一个该目录的过滤器
-      searchDirInvert: false,  // 在以下目录搜索，是保留还是排除
+      searchDirRecursive: false,  // 在以下目录搜索，是保留还是排除
       searchExtension: '', // 文件扩展名（'txt;mp4;mp3;rar'）
       searchExtensionInvert: false, //文件扩展名是保留还是排除
       searchTypeFolder: true, //checkbox，搜索文件类型，是文件夹还是文件
@@ -152,8 +153,69 @@ export default {
     }
   },
   methods: {
+    show(filter){
+      this.filters = []
+      this.dialog = true
+
+      setTimeout(() => {
+        if(filter.folder !== undefined){
+          this.filters.push('folder')
+          this.searchDir = filter.folder
+          this.searchDirRecursive = filter.recursive
+        }
+        if(filter.type !== undefined){
+          this.filters.push('type')
+          this.searchTypeFolder = filter.type.includes(0)
+          this.searchTypeFile = filter.type.includes(1)
+        }
+        if(filter.ext !== undefined){
+          this.filters.push('extension')
+          this.searchExtension = filter.ext
+          this.searchExtensionInvert = filter.ext_blacklist
+        }
+        if(filter.time_modified !== undefined){
+          this.filters.push('modified')
+          this.searchModifiedTimeRange = filter.time_modified
+        }
+        if(filter.time_created !== undefined){
+          this.filters.push('created')
+          this.searchCreateTimeRange = filter.time_created
+        }
+      }, 100)
+    },
     save() {
       this.dialog = false
+      this.$emit('save', this.getFilter())
+    },
+    getFilter(){
+      let filter = {}
+
+      if(this.filters.includes('folder')){
+        filter.folder = this.searchDir
+        filter.recursive = this.searchDirRecursive
+      }
+      if(this.filters.includes('type')){
+        let type = []
+        if(this.searchTypeFolder){
+          type.push(0)
+        }
+        if(this.searchTypeFile){
+          type.push(1)
+        }
+        filter.type = type
+      }
+      if(this.filters.includes('extension') && (!filter.type || filter.type.includes(1))){
+        filter.ext = this.searchExtension
+        filter.ext_blacklist = this.searchExtensionInvert
+      }
+      if(this.filters.includes('modified')){
+        filter.time_modified = this.searchModifiedTimeRange
+      }
+      if(this.filters.includes('created')){
+        filter.time_created = this.searchCreateTimeRange
+      }
+
+      return filter
     },
     getDisplayTimeStr(d){
       if(isNaN(d.getTime())){

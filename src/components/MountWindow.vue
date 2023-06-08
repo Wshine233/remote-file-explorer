@@ -53,7 +53,7 @@
               <v-list-item v-for="item in ignoreList" :value="item.path" @click="edit(item)" rounded>
                 <v-list-item-title class="ellipse-rtl">{{item.path}}</v-list-item-title>
                 <template #append>
-                  <v-btn color="important" density="comfortable" min-width="10" @click.stop="remove(item)">
+                  <v-btn color="important" density="comfortable" min-width="10" @click.stop="removeIgnore(item)">
                     <v-icon>mdi-delete</v-icon>
                   </v-btn>
                 </template>
@@ -64,11 +64,15 @@
       </v-container>
     </v-card>
   </v-window-item>
+
+  <ConfirmDialog ref="confirm" />
 </template>
 
 <script>
+import ConfirmDialog from "@/components/ConfirmDialog";
 export default {
   name: "MountWindow",
+  components: {ConfirmDialog},
   emits: ['back'],
   data(){
     return {
@@ -115,10 +119,16 @@ export default {
       this.$emit('back')
     },
     remove(mount){
-      window.alert('remove')
+      this.showConfirm('Warning', 'Are you sure to remove this mount?\nThis will not delete the file/folder in the target path.')
+    },
+    removeIgnore(ignore){
+      this.showConfirm('Warning', 'Are you sure to remove the ignore?\nThis file/folder may be mounted and visible for other users.')
     },
     edit(mount){
       window.alert('edit')
+    },
+    showConfirm(title = 'Warning', content = 'Are you sure to remove this item?'){
+      this.$refs.confirm.show(title, content)
     }
   }
 }

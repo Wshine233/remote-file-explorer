@@ -1,26 +1,20 @@
 <template id="body">
   <UserDrawer ref="userDrawer" :user-info="userInfo"/>
   <ViewSelectDialog ref="viewSelector" />
-  <SortSelectDialog ref="sortSelector" />
+  <SortSelectDialog ref="sortSelector" @confirm="updateSortRule"/>
   <Settings ref="setting" />
-  <SearchDialog ref="search" />
+  <SearchDialog ref="search" :path="path" />
 
   <v-toolbar class="toolbar" color="primary" :elevation="2">
     <v-btn icon="mdi-menu" @click="showDrawer"></v-btn>
     <v-toolbar-title>Files</v-toolbar-title>
     <v-spacer></v-spacer>
-    <v-btn icon="mdi-view-list" @click="showViewSelector"></v-btn>
+    <v-btn icon="mdi-magnify" @click="showSearch"></v-btn>
     <v-btn icon="mdi-sort-variant" @click="showSortSelector"></v-btn>
     <v-btn icon="mdi-dots-vertical">
       <v-icon>mdi-dots-vertical</v-icon>
       <v-menu activator="parent" z-index="10087">
         <v-list>
-          <v-list-item title="Search" value="search" density="comfortable" @click="showSearch">
-            <template v-slot:prepend>
-              <v-icon style="margin-inline-end: 10px" icon="mdi-magnify"
-                      size="26"></v-icon>
-            </template>
-          </v-list-item>
           <v-list-item title="Create Folder" value="download" density="comfortable">
             <template v-slot:prepend>
               <v-icon style="margin-inline-end: 10px" icon="mdi-folder-plus-outline"
@@ -68,7 +62,7 @@
     </template>
   </v-toolbar>
 
-  <FileListView :file-list="fileList" :select-mode="selectMode" @clickInfo="clickInfo" @clickItem="click" @holdItem="hold"/>
+  <FileListView :file-list="list" :select-mode="selectMode" @clickInfo="clickInfo" @clickItem="click" @holdItem="hold"/>
 
   <v-overlay :model-value="loading"
              class="align-center justify-center"
@@ -92,7 +86,7 @@
 <script>
 import axios from "axios";
 import {systemState} from "@/system";
-import {getTimeStr} from "@/utils";
+import {getDateStr, getFileExtType, getReadableSize, getTimeStr, sortByFileName} from "@/utils";
 import ToolbarAction from "@/components/ToolbarAction";
 import FileListView from "@/components/FileListView";
 import UserDrawer from "@/components/UserDrawer";
@@ -113,13 +107,15 @@ export default {
         {
           name: "Example Folder",
           type: 0,
-          time: "2021-01-01 00:00:00",
+          time: 1111,
+          timeStr: "2021-01-01 00:00:00",
           selected: false
         },
         {
           name: "Example File",
           type: 1,
-          time: "2021-01-01 00:00:00",
+          time: 1111,
+          timeStr: "2021-01-01 00:00:00",
           selected: false
         }
       ],
@@ -147,7 +143,32 @@ export default {
         text: "这是放置详细信息的界面"
       },
       drawer: false,
-      fileInfo: null
+      fileInfo: null,
+      sortRule: {
+        sort: sortByFileName,
+        descending: false,
+        blockTypes: []
+      }
+    }
+  },
+  computed:{
+    list(){
+      let list = this.fileList.filter(item => {
+        let ext = item.name.substr(item.name.lastIndexOf('.'))
+        ext = getFileExtType(ext, item.type)
+        if(this.sortRule.blockTypes.includes(ext)){
+          return false
+        }
+
+        return true
+      })
+
+      this.sortRule.sort(list)
+      if(this.sortRule.descending){
+        list = list.reverse();
+      }
+
+      return list
     }
   },
   methods: {
@@ -234,7 +255,7 @@ export default {
       this.$refs.setting.dialog = true
     },
     showSearch(){
-      this.$refs.search.dialog = true
+      this.$refs.search.show()
     },
     selectAll(){
       for (const file of this.fileList) {
@@ -265,12 +286,15 @@ export default {
           for (let file of res.data) {
             let time = 'unknown'
             if(file.time !== null){
-              time = getTimeStr(file.time)
+              time = getDateStr(file.time)
             }
             list.push({
               name: file.path.substr(file.path.lastIndexOf('/') + 1),
               type: file.type,
-              time: time,
+              time: file.time,
+              size: file.type === 0 ? 0 : file.size,
+              timeStr: time,
+              sizeStr: file.type === 0 ? '' : getReadableSize(file.size),
               perm: file.perm
             })
           }
@@ -289,6 +313,9 @@ export default {
         console.log(err)
         window.alert(err)
       })
+    },
+    updateSortRule(rule){
+      this.sortRule = rule
     }
   },
   watch: {

@@ -2,41 +2,20 @@
   <v-dialog v-model="dialog">
     <v-sheet>
       <v-card :elevation="0">
-        <template #title>
-          <v-card-title class="header-text">Sort Method {{sort}}</v-card-title>
-        </template>
 
-        <template #text>
-          <v-btn-toggle v-model="sort" class="grid-toggle" shaped mandatory>
-            <v-btn>
-              <v-icon>mdi-format-align-left</v-icon>
-            </v-btn>
+        <v-card-title class="header-text">Sort Method</v-card-title>
 
-            <v-btn>
-              <v-icon>mdi-format-align-center</v-icon>
-            </v-btn>
-
-            <v-btn>
-              <v-icon>mdi-format-align-right</v-icon>
-            </v-btn>
-
-            <v-btn>
-              <v-icon>mdi-format-align-justify</v-icon>
-            </v-btn>
-
-            <v-btn>
-              <v-icon>mdi-format-align-justify</v-icon>
-            </v-btn>
-
-            <v-btn>
-              <v-icon>mdi-format-align-justify</v-icon>
-            </v-btn>
-
-            <v-btn>
-              <v-icon>mdi-format-align-justify</v-icon>
+        <v-card-text style="padding-bottom: 0">
+          <v-list-subheader>{{ sortMethods[sort] ? sortMethods[sort].name : "" }}</v-list-subheader>
+          <v-btn-toggle v-model="sort" color="primary" shaped mandatory>
+            <v-btn v-for="sort in sortMethods" variant="outlined">
+              <v-icon size="x-large">{{ sort.icon }}</v-icon>
             </v-btn>
           </v-btn-toggle>
-        </template>
+
+          <v-switch v-model="descending" :label="descending ? 'Descending' : 'Ascending'" hide-details></v-switch>
+        </v-card-text>
+
       </v-card>
 
       <v-divider></v-divider>
@@ -47,51 +26,29 @@
         </template>
 
         <template #text>
-          <v-chip-group
-            v-model="types"
-            column
-            multiple
-          >
-            <v-chip
-              filter
-              variant="outlined"
-            >
+          <v-chip-group v-model="types" column multiple>
+            <v-chip filter variant="outlined" value="folder" filter-icon="mdi-close">
               Folder
             </v-chip>
-            <v-chip
-              filter
-              variant="outlined"
-            >
+            <v-chip filter variant="outlined" value="picture" filter-icon="mdi-close">
               Picture
             </v-chip>
-            <v-chip
-              filter
-              variant="outlined"
-            >
+            <v-chip filter variant="outlined" value="video" filter-icon="mdi-close">
               Video
             </v-chip>
-            <v-chip
-              filter
-              variant="outlined"
-            >
+            <v-chip filter variant="outlined" value="audio" filter-icon="mdi-close">
               Audio
             </v-chip>
-            <v-chip
-              filter
-              variant="outlined"
-            >
+            <v-chip filter variant="outlined" value="text" filter-icon="mdi-close">
               Text
             </v-chip>
-            <v-chip
-              filter
-              variant="outlined"
-            >
+            <v-chip filter variant="outlined" value="document" filter-icon="mdi-close">
               Document
             </v-chip>
-            <v-chip
-              filter
-              variant="outlined"
-            >
+            <v-chip filter variant="outlined" value="archive" filter-icon="mdi-close">
+              Archive
+            </v-chip>
+            <v-chip filter variant="outlined" value="unknown" filter-icon="mdi-close">
               Unknown
             </v-chip>
           </v-chip-group>
@@ -99,7 +56,7 @@
 
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn>Done</v-btn>
+          <v-btn @click="confirm">Done</v-btn>
         </v-card-actions>
       </v-card>
     </v-sheet>
@@ -107,20 +64,60 @@
 </template>
 
 <script>
+import {sortByFileName, sortByRandom, sortBySize, sortByTime} from "@/utils";
+
 export default {
   name: "SortSelectDialog",
-  data(){
+  emits: ['confirm'],
+  data() {
     return {
       dialog: false,
-      types: null,
-      sort: null
+      types: [],
+      sort: 0,
+      descending: false,
+      sortMethods: [
+        {
+          name: "File Name",
+          icon: "mdi-sort-alphabetical-ascending",
+          method: sortByFileName
+        },
+        {
+          name: "File Size",
+          icon: "mdi-sort-numeric-ascending",
+          method: sortBySize
+        },
+        {
+          name: "File Time",
+          icon: "mdi-sort-clock-ascending",
+          method: sortByTime
+        },
+        {
+          name: "Random",
+          icon: "mdi-dice-5",
+          method: sortByRandom
+        }
+      ]
     }
   },
+  methods: {
+    show() {
+      this.dialog = true;
+    },
+    confirm(){
+      let result = {
+        sort: this.sortMethods[this.sort].method,
+        descending: this.descending,
+        blockTypes: this.types
+      }
+      this.$emit('confirm', result);
+      this.dialog = false;
+    }
+  }
 }
 </script>
 
 <style scoped>
-.grid-toggle{
+.grid-toggle {
   position: relative;
   height: auto;
   display: grid;
@@ -132,8 +129,8 @@ export default {
   padding: 10px;
 }
 
-.header-text{
+.header-text {
   font-size: 18px;
-  color: black;
+  padding-bottom: 0;
 }
 </style>

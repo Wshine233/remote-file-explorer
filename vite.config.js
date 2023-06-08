@@ -51,6 +51,11 @@ export default defineConfig({
           entry: './register.js', //根据root的设置，
           template: 'src/pages/register.html',
           filename: 'register.html' //名字随意，但必须有
+        },
+        {
+          entry: './share.js', //根据root的设置，
+          template: 'src/pages/share.html',
+          filename: 'share.html' //名字随意，但必须有
         }
       ]
     })

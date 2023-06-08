@@ -25,7 +25,17 @@
           <v-card-text>
             <v-list>
               <div v-for="group in Object.keys(userList)">
-                <v-list-subheader class="font-weight-bold" style="font-size: 16px">#{{group}}</v-list-subheader>
+                <div class="flex-inline">
+                  <v-list-subheader class="font-weight-bold" style="font-size: 16px">
+                    #{{group}}
+                  </v-list-subheader>
+                  <v-spacer></v-spacer>
+                  <v-btn color="info" density="comfortable" class="rect-btn" variant="text" style="margin: 0 16px;"
+                         icon @click="showBroadcast(getUsers(group), `Send to all users in group ${group}`)">
+                    <v-icon>mdi-bullhorn-variant</v-icon>
+                  </v-btn>
+                </div>
+
                 <v-list-item v-for="item in userList[group]" :value="item.root" @click="edit(item)" rounded>
                   <template #title>
                     <div class="flex-inline">
@@ -52,15 +62,22 @@
       </v-container>
 
     </v-card>
+
+    <BroadcastDialog ref="broadcast" :send-to="sendTo" :hint="sendToMsg" />
   </v-window-item>
 </template>
 
 <script>
+import BroadcastDialog from "@/components/BroadcastDialog";
 export default {
   name: "UserWindow",
+  components: {BroadcastDialog},
   emits: ['back'],
   data(){
     return {
+      loading: false,
+      sendTo: [],
+      sendToMsg: "",
       users:[
         {
           id: "wshine",
@@ -178,7 +195,7 @@ export default {
           group: "user"
         }
       ],
-      loading: false
+
     }
   },
   computed:{
@@ -209,6 +226,15 @@ export default {
       setTimeout(() => {
         this.loading = false
       }, 2000);
+    },
+    showBroadcast(sendTo, msg){
+      this.sendTo = sendTo
+      this.sendToMsg = msg
+      this.$refs.broadcast.dialog = true
+      console.log(sendTo)
+    },
+    getUsers(group){
+      return this.users.filter(user => user.group === group).map(user => user.id)
     }
   }
 }

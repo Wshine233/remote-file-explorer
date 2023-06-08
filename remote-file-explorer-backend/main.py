@@ -189,6 +189,31 @@ def list_file():
         return rh.pack_response(False, 'Request error.', e)
 
 
+@app.route('/file/search', methods=['POST'])
+def search():
+    try:
+        data = request.get_json()
+        session = data.get('sessionId')
+        keyword = data.get('keyword')
+        filter = data.get('filter')
+        
+        if session is None or keyword is None or filter is None:
+            return rh.pack_response(False, 'Request format error.')
+        
+        user = um.verify_session(session)
+        if user:
+            user = um.get_user_id(session)
+            if user is None:
+                return rh.pack_response(False, 'Unknown error. User not found.')
+        else:
+            return rh.pack_response(False, 'Session expired. Please login again.')
+        
+        result = fm.find_file(user, keyword, filter)
+        return rh.pack_response(True, f'Success. Got {len(result)} item(s).', result)
+    except Exception as e:
+        return rh.pack_response(False, 'Request error.', e)
+        
+
 
 @app.route('/file/download', methods=['POST'])
 def download():

@@ -1,10 +1,10 @@
 <template>
-  <v-virtual-scroll id="list" item-height="60" :items="fileList">
+  <v-virtual-scroll id="list" item-height="60" :items="shareList">
     <template v-slot:default="{item, index}">
       <v-list-item variant="flat"
                    :title="item.name"
                    :value="item"
-                   :subtitle="`${item.timeStr}&nbsp;&nbsp;&nbsp;${item.sizeStr}`"
+                   :subtitle="`${item.timeStr}${item.type === 0 ? '' : `&nbsp;&nbsp;&nbsp;&nbsp;${item.sizeStr}`}`"
                    density="comfortable"
                    height="60"
                    :class="{'user-select-disabled': true, 'item-selected': item.selected}"
@@ -19,7 +19,7 @@
         </template>
 
         <template v-slot:append>
-          <v-btn variant="text" density="comfortable" icon="mdi-information" color="grey-lighten-1" @click.stop="clickInfo(item)"></v-btn>
+          <v-btn variant="text" density="comfortable" icon="mdi-download" color="grey-lighten-1" @click.stop="clickInfo(item)"></v-btn>
         </template>
 
       </v-list-item>
@@ -29,9 +29,9 @@
 
 <script>
 export default {
-  name: "FileListView",
-  props:['fileList', 'selectMode'],
-  emits: ['clickInfo', 'clickItem', 'holdItem'],
+  name: "ShareListView",
+  props:['shareList', 'selectMode'],
+  emits: ['clickDownload', 'clickItem', 'holdItem'],
   methods: {
     getIcon(type, name) {
       if (type === 0) {
@@ -44,7 +44,7 @@ export default {
       this.$emit('clickItem', item)
     },
     clickInfo(item){
-      this.$emit('clickInfo', item)
+      this.$emit('clickDownload', item)
     },
     touchStart(file) {
       this.holdTimeout = setTimeout(() => {

@@ -2,6 +2,7 @@ import pathlib
 import random
 import crypto
 import config as cfg
+import data_serialize_helper as dsh
 
 
 users = [
@@ -22,6 +23,18 @@ sessions = [
         'user': 'admin'
     }
 ]
+
+
+
+def load_data():
+    global users, sessions
+    users = dsh.deserialize_users(None, cfg.user_data_path)
+    sessions = dsh.deserialize_sessions(None, cfg.session_data_path)
+
+
+def save_data():
+    dsh.serialize_users(users, cfg.user_data_path)
+    dsh.serialize_sessions(sessions, cfg.session_data_path)
 
 
 def get_user_by_id(user_id):
@@ -65,6 +78,8 @@ def add_user(id, password_hash, name, permission_group, permission):
         'permissionGroup': permission_group,
         'permission': permission
     })
+
+    save_data()
     return True
 
 
@@ -72,6 +87,7 @@ def remove_user(id):
     for user in users:
         if user['id'] == id:
             users.remove(user)
+            save_data()
             return True
     return False
 
@@ -84,6 +100,8 @@ def update_user(user_id, keys: list, values: list):
         if keys[i] == 'passwordHash':
             continue
         user[keys[i]] = values[i]
+    
+    save_data()
     return True
 
 
@@ -94,6 +112,8 @@ def update_password(user_id, old_password_hash, new_password_hash):
     if user['passwordHash'] != old_password_hash:
         return False
     user['passwordHash'] = new_password_hash
+
+    save_data()
     return True
 
 
@@ -130,6 +150,7 @@ def clear_expired_session():
     for session in sessions[:]:
         if session['expired'] < crypto.time():
             sessions.remove(session)
+    save_data()
 
 
 def get_session(session_id):
@@ -148,6 +169,7 @@ def create_session(user_id):
         'expired': crypto.time() + cfg.session_expire_time,
         'user': user_id
     })
+    save_data()
     return session_id
 
 
@@ -156,6 +178,7 @@ def delete_session(session_id):
     if session is None:
         return False
     sessions.remove(session)
+    save_data()
     return True
 
 
@@ -176,9 +199,14 @@ def update_session(session_id):
         return None
     session['id'] = crypto.uuid_v4()
     session['expired'] = crypto.time() + cfg.session_expire_time
+
+    save_data()
     return session['id']
 
 
 def session_login(session_id):
     return update_session(session_id)
-    
+
+
+
+load_data()
