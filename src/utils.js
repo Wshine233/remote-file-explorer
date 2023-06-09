@@ -159,7 +159,7 @@ export function getFileExtType(ext, type = 1) {
     return 'audio'
   }
 
-  if(['txt'].includes(ext)){
+  if(['txt', 'cfg', 'log'].includes(ext)){
     return 'text'
   }
 
@@ -172,5 +172,51 @@ export function getFileExtType(ext, type = 1) {
   }
 
   return "unknown"
+}
 
+export function getFileIcon(type, name) {
+  if (type === 0) {
+    return "mdi-folder"
+  }
+  if (name.indexOf('.') === -1) {
+    return "mdi-file"
+  }
+  let suffix = name.split('.').pop().toLowerCase()
+  let extType = getFileExtType(suffix)
+  switch (extType) {
+    case 'picture':
+      return "mdi-image"
+    case 'video':
+      return "mdi-video"
+    case 'audio':
+      return "mdi-music-box"
+    case 'text':
+      return "mdi-text-box"
+    case 'document':
+      return "mdi-file-document"
+    case 'archive':
+      return "mdi-zip-box"
+  }
+
+  return "mdi-file"
+}
+
+export function parseUrlParams(url){
+  let params = {}
+  if(url.indexOf('?') === -1){
+    return params
+  }
+
+  let paramStr = url.split('?')[1]
+  if(paramStr){
+    let paramArr = paramStr.split('&')
+    for(let i = 0; i < paramArr.length; i++){
+      let param = paramArr[i].split('=')
+      if (param.length !== 2) {
+        continue
+      }
+      params[param[0]] = param[1]
+    }
+  }
+  return params
 }

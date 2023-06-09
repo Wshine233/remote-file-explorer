@@ -18,3 +18,6 @@ default_group = 'restrict'
 
 log_path = 'remote-file-explorer-backend/data/log'
 log_expire_time = 7*24*3600*1000 # 7 days
+
+
+preview_expire_time = 5*60*1000 # 5 minutes

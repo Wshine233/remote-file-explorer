@@ -80,6 +80,11 @@
     <ToolbarAction v-if="selectMode" :select-list="selectList" :base="path" ref="actions" @selectAll="selectAll" @selectInvert="selectInvert"/>
   </v-slide-y-reverse-transition>
 
+  <ImagePreviewDialog ref="imgPreview" :src="imgSrc"/>
+
+  <v-snackbar v-model="popup" color="error" timeout="2000">
+    {{errMsg}}
+  </v-snackbar>
 
 </template>
 
@@ -95,10 +100,12 @@ import SortSelectDialog from "@/components/SortSelectDialog";
 import DetailDialog from "@/components/DetailDialog";
 import Settings from "@/components/Settings";
 import SearchDialog from "@/components/SearchDialog";
+import ImagePreviewDialog from "@/components/ImagePreviewDialog";
 
 export default {
   name: "FileList",
   components: {
+    ImagePreviewDialog,
     SearchDialog,
     Settings, DetailDialog, SortSelectDialog, ViewSelectDialog, UserDrawer, FileListView, ToolbarAction},
   data() {
@@ -148,7 +155,12 @@ export default {
         sort: sortByFileName,
         descending: false,
         blockTypes: []
-      }
+      },
+
+      imgSrc: '',
+
+      errMsg: '',
+      popup: false
     }
   },
   computed:{
@@ -193,12 +205,40 @@ export default {
       list.reverse()
       this.pathBreadcrumb = list
     },
+    tryPreview(file){
+      console.log('preview: ', file)
+      let type = getFileExtType(file.name.substr(file.name.lastIndexOf('.')), file.type)
+
+      axios.defaults.baseURL = systemState.globalSettings.backendUrl
+      axios.post('/preview/token', {
+        sessionId: systemState.currentSession,
+        path: file.path
+      }).then(res => {
+        console.log(res)
+        let data = res.data
+        if(!data.success){
+          this.showErr(data.message)
+          return
+        }
+        let token = data.data
+        if(type === 'picture'){
+          this.imgSrc = systemState.globalSettings.backendUrl + '/preview?token=' + token + '&user=' + systemState.currentSession
+          this.$refs.imgPreview.show()
+        }
+      }).catch(err => {
+        console.log(err)
+        this.showErr(err.data.message)
+      })
+
+    },
     click(file) {
       if (this.selectMode) {
         this.updateSelect(file)
       } else {
         if (file.type === 0) {
           this.changePath(this.path + (this.path === '/' ? file.name : '/' + file.name))
+        }else{
+          this.tryPreview(file)
         }
       }
     },
@@ -233,6 +273,10 @@ export default {
     },
     clickInfo(file){
       this.showDetail(file)
+    },
+    showErr(msg){
+      this.errMsg = msg
+      this.popup = true
     },
     showDrawer(){
       this.$refs.userDrawer.drawer = true
@@ -290,6 +334,7 @@ export default {
             }
             list.push({
               name: file.path.substr(file.path.lastIndexOf('/') + 1),
+              path: file.path,
               type: file.type,
               time: file.time,
               size: file.type === 0 ? 0 : file.size,

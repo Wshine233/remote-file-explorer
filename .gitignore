@@ -22,3 +22,4 @@ pnpm-debug.log*
 *.sln
 *.sw?
 /remote-file-explorer-backend/data
+/remote-file-explorer-backend/data/*

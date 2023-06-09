@@ -4,6 +4,8 @@ import user_manager as um
 import response_helper as rh
 import permission_manager as pm
 import file_manager as fm
+import crypto
+import preview_helper as ph
 from flask_cors import CORS
 
 app = Flask(__name__)
@@ -296,6 +298,61 @@ def get_perm():
         if result is None:
             return rh.pack_response(False, 'File not found.')
         return rh.pack_response(True, 'Success.', result)
+    except Exception as e:
+        return rh.pack_response(False, 'Request error.', e)
+
+
+"""预览部分"""
+@app.route('/preview/token', methods=['POST'])
+def preview_token():
+    try:
+        data = request.get_json()
+        session = data.get('sessionId')
+        path = data.get('path')
+        ip = request.remote_addr
+
+        if session is None or path is None:
+            return rh.pack_response(False, 'Request format error.')
+        
+        user = um.verify_session(session)
+        if user:
+            user = um.get_user_id(session)
+            if user is None:
+                return rh.pack_response(False, 'Unknown error. User not found.')
+        else:
+            return rh.pack_response(False, 'Session expired. Please login again.')
+        
+        token = crypto.preview_token(user, path, ip)
+        if token is None:
+            return rh.pack_response(False, 'Cannot get token.')
+        return rh.pack_response(True, 'Success.', token)
+    except Exception as e:
+        return rh.pack_response(False, 'Request error.', e)
+
+
+@app.route('/preview', methods=['GET'])
+def preview():
+    try:
+        token = request.args.get('token')
+        session = request.args.get('user')
+        ip = request.remote_addr
+        
+        if token is None or session is None:
+            return rh.pack_response(False, 'Request format error.')
+        
+        user = um.verify_session(session)
+        if user:
+            user = um.get_user_id(session)
+            if user is None:
+                return rh.pack_response(False, 'Unknown error. User not found.')
+        else:
+            return rh.pack_response(False, 'Session expired. Please login again.')
+        
+
+        result = ph.get_preview_file(token, user, ip)
+        if result is None:
+            return rh.pack_response(False, 'Preview Not Found.')
+        return send_file(result, as_attachment=False)
     except Exception as e:
         return rh.pack_response(False, 'Request error.', e)
 

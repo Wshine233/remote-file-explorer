@@ -28,17 +28,15 @@
 </template>
 
 <script>
+import {getFileExtType, getFileIcon} from "@/utils";
+
 export default {
   name: "FileListView",
   props:['fileList', 'selectMode'],
   emits: ['clickInfo', 'clickItem', 'holdItem'],
   methods: {
     getIcon(type, name) {
-      if (type === 0) {
-        return "mdi-folder"
-      } else if (name !== "") {
-        return "mdi-file"
-      }
+      return getFileIcon(type, name)
     },
     click(item) {
       this.$emit('clickItem', item)
