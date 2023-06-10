@@ -5,13 +5,18 @@ import config as cfg
 
 permission_groups = [
     {
+        'id': 'super',
+        'permission': "adxms"
+    },
+    {
         'id': 'admin',
         'permission': "adxms"  # a: add, d: download, x: delete, m: manage, s: share
     },
     {
         'id': 'restrict',
         'permission': "-----"
-    }
+    },
+    
 ]
 
 

@@ -1,3 +1,6 @@
+import axios from "axios";
+import {systemState} from "@/system";
+import {requestGetUserInfo, requestUpdateUserInfo} from "@/user-manager";
 
 export function getTimeStr(time){
   console.log(`time: ${time}`)
@@ -159,11 +162,11 @@ export function getFileExtType(ext, type = 1) {
     return 'audio'
   }
 
-  if(['txt', 'cfg', 'log'].includes(ext)){
+  if(['txt', 'cfg', 'log', 'json', 'md'].includes(ext)){
     return 'text'
   }
 
-  if(['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'pdf', 'md'].includes(ext)){
+  if(['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'pdf'].includes(ext)){
     return 'document'
   }
 
@@ -219,4 +222,101 @@ export function parseUrlParams(url){
     }
   }
   return params
+}
+
+export function getFileName(path){
+  let arr = path.split('/')
+  return arr[arr.length - 1]
+}
+
+export function getFileExtension(path){
+  if(path.lastIndexOf('.') === -1){
+    return ''
+  }else{
+    return path.substring(path.lastIndexOf('.'))
+  }
+}
+
+export function getFileStem(path){
+  let name = getFileName(path)
+  if(name.lastIndexOf('.') === -1){
+    return name
+  }else{
+    return name.substring(0, name.lastIndexOf('.'))
+  }
+}
+
+export function post(url, data){
+  axios.defaults.baseURL = systemState.globalSettings.backendUrl
+  return new Promise((resolve, reject) => {
+    axios.post(url, data).then(res => {
+      let data = res.data
+      if(data.success){
+        resolve(data)
+      }else {
+        reject(data)
+      }
+    }).catch(err => {
+      reject(err.data ? err.data : err)
+    })
+  })
+}
+
+
+export function checkSuperUser(){
+  return new Promise((resolve, reject) => {
+    post('/user/super', {
+      sessionId: systemState.currentSession
+    }).then(res => {
+      if(res.data){
+        resolve(res)
+      }else{
+        reject(res)
+      }
+    }).catch(err => {
+      reject(err)
+    })
+  })
+}
+
+
+export function getUserGroup(){
+  let request = requestGetUserInfo(systemState.currentSession, ['permissionGroup'])
+  return new Promise((resolve, reject) => {
+    request.then(res => {
+      if(res.success){
+        resolve(res.data.permissionGroup)
+      }else{
+        reject(res)
+      }
+    })
+  })
+}
+
+
+export function getUserProfile(){
+  let request = requestGetUserInfo(systemState.currentSession, ['name', 'email', 'gender', 'description', 'joinTime', 'permissionGroup'])
+  return new Promise((resolve, reject) => {
+    request.then(res => {
+      if(res.success){
+        resolve(res.data)
+      }else{
+        reject(res)
+      }
+    })
+  })
+}
+
+
+export function setUserProfile(keys, values){
+  let request = requestUpdateUserInfo(systemState.currentSession, keys, values)
+  return new Promise((resolve, reject) => {
+    request.then(res => {
+      if(res.success){
+        resolve(res)
+      }else{
+        reject(res)
+      }
+    })
+  })
 }

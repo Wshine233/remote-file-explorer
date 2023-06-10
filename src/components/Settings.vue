@@ -5,12 +5,7 @@
         <v-text-field v-model="backendUrlEdit" label="Backend URL" hint="Backend server's address (e.g. http://127.0.0.1:1080)" clearable></v-text-field>
       </v-card-text>
       <v-card-actions>
-        <v-btn loading="true">
-          Test
-          <template #loader>
-            <v-progress-circular width="3" size="25" indeterminate color="info"></v-progress-circular>
-          </template>
-        </v-btn>
+        <v-btn :loading="loading" color="warning" @click="test">Test</v-btn>
         <v-spacer></v-spacer>
         <v-btn @click="saveUrlEdit">Save</v-btn>
       </v-card-actions>
@@ -53,29 +48,29 @@
               <v-list-subheader>User</v-list-subheader>
               <v-list-item title="Reset Password" subtitle="Reset your password. You need to enter your original password."
                            value="password" @click="showPasswordReset"></v-list-item>
-              <v-list-item title="User Group" subtitle="admin"
+              <v-list-item title="User Group" :subtitle="userGroup"
                            value="group" @click="showGroup"></v-list-item>
             </v-list>
 
             <v-divider></v-divider>
 
-            <v-list lines="two">
-              <v-list-subheader>Super User</v-list-subheader>
-              <v-list-item title="Manage Mounts" subtitle="Add, delete, edit mounts in current mount list." value="mount" @click="showWindow('mount')"></v-list-item>
-              <v-list-item title="Manage Users" subtitle="Edit user permissions, or remove users." value="user" @click="showWindow('user')"></v-list-item>
-              <v-list-item title="Manage Permissions" subtitle="Edit default permissions, or configure file rules." value="perm" @click="showWindow('perm')"></v-list-item>
-              <v-list-item title="Broadcast Message" subtitle="Broadcast Message to all users." value="broadcast" @click="showMessage"></v-list-item>
-            </v-list>
+            <v-slide-y-transition>
+              <v-list v-if="superVisible" lines="two">
+                <v-list-subheader>Super User</v-list-subheader>
+                <v-list-item title="Manage Mounts" subtitle="Add, delete, edit mounts in current mount list." value="mount" @click="showWindow('mount')"></v-list-item>
+                <v-list-item title="Manage Users" subtitle="Edit user permissions, or remove users." value="user" @click="showWindow('user')"></v-list-item>
+                <v-list-item title="Manage Permissions" subtitle="Edit default permissions, or configure file rules." value="perm" @click="showWindow('perm')"></v-list-item>
+                <v-list-item title="Broadcast Message" subtitle="Broadcast Message to all users." value="broadcast" @click="showMessage"></v-list-item>
+              </v-list>
+            </v-slide-y-transition>
           </div>
 
         </v-card>
       </v-window-item>
 
-      <MountWindow v-if="mode === 'mount' || wait" @back="showWindow('settings')"/>
-
-      <UserWindow v-if="mode === 'user' || wait" @back="showWindow('settings')"/>
-
-      <PermWindow v-if="mode === 'perm' || wait" @back="showWindow('settings')"/>
+      <MountWindow ref="mount" v-if="mode === 'mount' || wait" @back="showWindow('settings')"/>
+      <UserWindow ref="user" v-if="mode === 'user' || wait" @back="showWindow('settings')"/>
+      <PermWindow ref="perm" v-if="mode === 'perm' || wait" @back="showWindow('settings')"/>
 
       <v-window-item v-if="mode === 'xxx' || wait"></v-window-item>
     </v-window>
@@ -84,6 +79,8 @@
   <BroadcastDialog ref="message" :send-to="[]" />
   <PasswordResetDialog ref="password" />
   <GroupUpgradeRequestDialog ref="group" />
+
+  <v-snackbar v-model="popup" timeout="2000" :color="status">{{msg}}</v-snackbar>
 </template>
 
 
@@ -95,6 +92,8 @@ import PermWindow from "@/components/PermWindow";
 import BroadcastDialog from "@/components/BroadcastDialog";
 import PasswordResetDialog from "@/components/PasswordResetDialog";
 import GroupUpgradeRequestDialog from "@/components/GroupUpgradeRequestDialog";
+import axios from "axios";
+import {checkSuperUser, getUserGroup} from "@/utils";
 
 export default {
   name: "Settings",
@@ -102,18 +101,42 @@ export default {
   data() {
     return {
       dialog: false,
+      loading: false,
       backendDialog: false,
       backendUrl: "",
       backendUrlEdit: "",
       step: "settings",
       mode: "settings",
-      wait: false
+      wait: false,
+
+      superVisible: false,
+      userGroup: '',
+
+      msg: '',
+      popup: false,
+      status: 'success'
     }
   },
   computed: {
 
   },
   methods:{
+    popMsg(msg, success = true){
+      this.msg = msg
+      this.popup = true
+      this.status = success ? 'success' : 'error'
+    },
+    test(){
+      this.loading = true
+      axios.defaults.baseURL = this.backendUrlEdit
+      axios.get('test/hello').then(res => {
+        this.popMsg('Test Success!')
+      }).catch(err => {
+        this.popMsg('Test Failed!', false)
+      }).finally(() => {
+        this.loading = false
+      })
+    },
     showUrlEdit(){
       this.backendDialog = true
       this.backendUrlEdit = this.backendUrl
@@ -121,6 +144,7 @@ export default {
     saveUrlEdit(){
       this.backendUrl = this.backendUrlEdit
       this.backendDialog = false
+      systemState.globalSettings.backendUrl = this.backendUrl
     },
     close(){
       this.step = "settings"
@@ -137,6 +161,10 @@ export default {
       setTimeout(() => {
         if(this.step !== step){
           this.mode = this.step
+        }else{
+          if(step === 'mount'){
+            this.$refs.mount.show()
+          }
         }
         this.wait = false
       }, 450)
@@ -148,6 +176,7 @@ export default {
       this.$refs.password.dialog = true
     },
     showGroup(){
+      return
       this.$refs.group.dialog = true
     }
   },
@@ -155,6 +184,18 @@ export default {
     dialog(val){
       if(val){
         this.backendUrl = systemState.globalSettings.backendUrl
+
+        this.superVisible = false
+        checkSuperUser().then(res => {
+          this.superVisible = true
+        })
+
+        this.userGroup = ''
+        getUserGroup().then(group => {
+          this.userGroup = group
+        }).catch(err => {
+          this.popMsg(err.message, false)
+        })
       }
     }
   }

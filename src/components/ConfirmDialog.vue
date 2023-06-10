@@ -28,24 +28,26 @@
 <script>
 export default {
   name: "ConfirmDialog",
-  emits: ['confirm'],
   data(){
     return {
       dialog: false,
       title: "",
       content: "",
-      warn: true  //如果是警告类窗口，则对调选项以防止误操作
+      warn: true,  //如果是警告类窗口，则对调选项以防止误操作
+      callback: null
     }
   },
   methods:{
-    show(title, content, warn = true){
+    show(title, content, warn = true, callback = null){
       this.title = title
       this.content = content
       this.warn = warn
       this.dialog = true
+      this.callback = callback
     },
     confirm(result){
-      this.$emit('confirm', result)
+      if(this.callback !== null)
+        this.callback(result)
       this.dialog = false
     }
   }

@@ -47,8 +47,8 @@ def format_mounts(mounts):
     result = []
     for mount in mounts.values():
         result.append({
-            'target': str(Path(mount['target']).resolve()),
-            'root': str(Path(mount['root']))
+            'target': str(Path(mount['target']).resolve()).replace('\\', '/'),
+            'root': str(Path(mount['root'])).replace('\\', '/')
         })
     return result
 
@@ -94,7 +94,7 @@ def format_perms(perms):
     result = []
     for perm in perms.values():
         result.append({
-            'file': str(Path(perm['file']).resolve()),
+            'file': str(Path(perm['file']).resolve()).replace('\\', '/'),
             'visibleGroup': perm['visibleGroup'],
             'visibleUser': perm['visibleUser'],
             'invisibleUser': perm['invisibleUser'],
@@ -143,7 +143,7 @@ def format_ignores(ignores):
 
     result = []
     for ignore in ignores:
-        result.append(str(Path(ignore).resolve()))
+        result.append(str(Path(ignore).resolve()).replace('\\', '/'))
     return result
 
 def object_ignores(ignores):

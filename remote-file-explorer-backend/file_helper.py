@@ -1,6 +1,7 @@
 import pathlib as pl
 from pathlib import Path
 import shutil
+import send2trash
 
 
 def get_file_name(path: Path):
@@ -74,16 +75,29 @@ def create_folder(path: Path):
 
 
 def delete_file(path: Path):
+    """将文件移动到回收站"""
     if not path.exists():
         return False
     if path.is_dir():
-        path.rmdir()
+        send2trash.send2trash(str(path))
     else:
-        path.unlink()
+        send2trash.send2trash(str(path))
+    return True
+
+
+def validate_file_name(name: str):
+    if name == '':
+        return False
+    invalid_chars = ['\\', '/', ':', '*', '?', '"', '<', '>', '|']
+    for char in invalid_chars:
+        if char in name:
+            return False
     return True
 
 
 def rename_file(path: Path, name: str):
+    if not validate_file_name(name):
+        return False
     if not path.exists():
         return False
     new_path = path.parent / name

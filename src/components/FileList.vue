@@ -3,7 +3,7 @@
   <ViewSelectDialog ref="viewSelector" />
   <SortSelectDialog ref="sortSelector" @confirm="updateSortRule"/>
   <Settings ref="setting" />
-  <SearchDialog ref="search" :path="path" />
+  <SearchDialog ref="search" :path="path" @path-click="clickPath" @preview="file => tryPreview(file)" />
 
   <v-toolbar class="toolbar" color="primary" :elevation="2">
     <v-btn icon="mdi-menu" @click="showDrawer"></v-btn>
@@ -15,7 +15,13 @@
       <v-icon>mdi-dots-vertical</v-icon>
       <v-menu activator="parent" z-index="10087">
         <v-list>
-          <v-list-item title="Create Folder" value="download" density="comfortable">
+          <v-list-item title="Refresh" value="refresh" density="comfortable" @click="changePath(path)">
+            <template v-slot:prepend>
+              <v-icon style="margin-inline-end: 10px" icon="mdi-refresh"
+                      size="26"></v-icon>
+            </template>
+          </v-list-item>
+          <v-list-item title="Create Folder" value="download" density="comfortable" @click="showCreateFolder">
             <template v-slot:prepend>
               <v-icon style="margin-inline-end: 10px" icon="mdi-folder-plus-outline"
                       size="26"></v-icon>
@@ -27,7 +33,7 @@
                       size="26"></v-icon>
             </template>
           </v-list-item>
-          <v-list-item title="Add Mount" value="move" density="comfortable">
+          <v-list-item title="Add Mount" value="move" density="comfortable" @click="showAddMount">
             <template v-slot:prepend>
               <v-icon style="margin-inline-end: 10px" icon="mdi-plus-box-outline"
                       size="26"></v-icon>
@@ -76,11 +82,23 @@
 
   <DetailDialog ref="detail" />
 
-  <v-slide-y-reverse-transition>
-    <ToolbarAction v-if="selectMode" :select-list="selectList" :base="path" ref="actions" @selectAll="selectAll" @selectInvert="selectInvert"/>
-  </v-slide-y-reverse-transition>
+  <div style="position: sticky; bottom: 0; background-color: transparent">
+    <AudioPreviewer ref="audioPreview" :src="previewSrc"/>
+    <v-slide-y-reverse-transition>
+      <ToolbarAction v-if="selectMode" :select-list="selectList" :base="path" ref="actions"
+                     @selectAll="selectAll" @selectInvert="selectInvert"
+                     @delete="changePath(path)" @rename="changePath(path)"/>
+    </v-slide-y-reverse-transition>
+  </div>
 
-  <ImagePreviewDialog ref="imgPreview" :src="imgSrc"/>
+  <ImagePreviewDialog ref="imgPreview" :src="previewSrc"/>
+  <VideoPreviewDialog ref="videoPreview" :src="previewSrc"/>
+  <TextPreviewDialog ref="textPreview" :src="previewSrc"/>
+
+  <CreateFolderDialog ref="createFolder" @confirm="changePath(path)" :path="path"/>
+  <AddMountDialog ref="addMount" @confirm="changePath(path)" :path="path"/>
+
+  <ClipBoard />
 
   <v-snackbar v-model="popup" color="error" timeout="2000">
     {{errMsg}}
@@ -101,10 +119,22 @@ import DetailDialog from "@/components/DetailDialog";
 import Settings from "@/components/Settings";
 import SearchDialog from "@/components/SearchDialog";
 import ImagePreviewDialog from "@/components/ImagePreviewDialog";
+import VideoPreviewDialog from "@/components/VideoPreviewDialog";
+import AudioPreviewer from "@/components/AudioPreviewer";
+import TextPreviewDialog from "@/components/TextPreviewDialog";
+import CreateFolderDialog from "@/components/CreateFolderDialog";
+import ClipBoard from "@/components/ClipBoard";
+import AddMountDialog from "@/components/AddMountDialog";
 
 export default {
   name: "FileList",
   components: {
+    AddMountDialog,
+    ClipBoard,
+    CreateFolderDialog,
+    TextPreviewDialog,
+    AudioPreviewer,
+    VideoPreviewDialog,
     ImagePreviewDialog,
     SearchDialog,
     Settings, DetailDialog, SortSelectDialog, ViewSelectDialog, UserDrawer, FileListView, ToolbarAction},
@@ -157,7 +187,7 @@ export default {
         blockTypes: []
       },
 
-      imgSrc: '',
+      previewSrc: '',
 
       errMsg: '',
       popup: false
@@ -185,6 +215,7 @@ export default {
   },
   methods: {
     changePath(path){
+      this.setSelectMode(false)
       this.getFileList(path)
     },
     updatePathBreadcrumb(){
@@ -221,10 +252,23 @@ export default {
           return
         }
         let token = data.data
-        if(type === 'picture'){
-          this.imgSrc = systemState.globalSettings.backendUrl + '/preview?token=' + token + '&user=' + systemState.currentSession
-          this.$refs.imgPreview.show()
+        this.previewSrc = systemState.globalSettings.backendUrl + '/preview?token=' + token + '&user=' + systemState.currentSession
+        switch (type) {
+          case 'picture':
+            this.$refs.imgPreview.show()
+            break
+          case 'video':
+            this.$refs.videoPreview.show()
+            break
+          case 'audio':
+            let stem = file.name.substr(0, file.name.lastIndexOf('.'))
+            this.$refs.audioPreview.show(stem, '')
+            break
+          case 'text':
+            this.$refs.textPreview.show()
+            break
         }
+
       }).catch(err => {
         console.log(err)
         this.showErr(err.data.message)
@@ -274,6 +318,9 @@ export default {
     clickInfo(file){
       this.showDetail(file)
     },
+    clickPath(path){
+      this.changePath(path)
+    },
     showErr(msg){
       this.errMsg = msg
       this.popup = true
@@ -300,6 +347,12 @@ export default {
     },
     showSearch(){
       this.$refs.search.show()
+    },
+    showCreateFolder(){
+      this.$refs.createFolder.show()
+    },
+    showAddMount(){
+      this.$refs.addMount.show()
     },
     selectAll(){
       for (const file of this.fileList) {

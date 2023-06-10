@@ -1,5 +1,5 @@
 <template>
-  <v-dialog v-model="dialog">
+  <v-dialog v-model="dialog" persistent>
     <v-sheet>
       <v-card :elevation="0">
 

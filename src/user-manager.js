@@ -403,8 +403,8 @@ export function requestUpdateUserInfo(sessionId, infoKeys, infoValues) {
     axios.defaults.baseURL = systemState.globalSettings.backendUrl
     let request = axios.post("/user/update-user", {
       sessionId: sessionId,
-      key: infoKeys,
-      value: infoValues
+      keys: infoKeys,
+      values: infoValues
     })
     return new Promise((resolve) => {
       request.then(response => {
@@ -455,7 +455,7 @@ export function requestGetUserInfo(sessionId, infoKeys) {
     axios.defaults.baseURL = systemState.globalSettings.backendUrl
     let request = axios.post("/user/get-user", {
       sessionId: sessionId,
-      key: infoKeys
+      keys: infoKeys
     })
     return new Promise((resolve) => {
       request.then(response => {

@@ -12,7 +12,7 @@
               <template #title>
                 <div style="padding-left: 0; min-width: 200px">
                   <v-list-item-subtitle>{{info.key}}</v-list-item-subtitle>
-                  <v-list-item-title>{{info.value}}</v-list-item-title>
+                  <v-list-item-title :class="{'clickable': info.click !== undefined}" @click="info.click !== undefined ? info.click() : ''">{{info.value}}</v-list-item-title>
                 </div>
               </template>
             </v-list-item>
@@ -31,6 +31,7 @@ import axios from "axios";
 
 export default {
   name: "DetailDialog",
+  emits: ['path-click'],
   data(){
     return {
       dialog: false,
@@ -69,7 +70,13 @@ export default {
         window.alert(err)
       })
     },
+    clickPath(path){
+      this.$emit('path-click', path)
+      this.dialog = false
+    },
     setInfo() {
+      let parent = this.fileInfo.path.substr(0, this.fileInfo.path.lastIndexOf('/'))
+      parent = parent.length === 0 ? '/' : parent
       if(this.fileInfo.type === 0){
         this.info = [
           {
@@ -81,7 +88,10 @@ export default {
               },
               {
                 key: "Path",
-                value: this.fileInfo.path
+                value: parent,
+                click: () => {
+                  this.clickPath(parent)
+                }
               },
               {
                 key: "Type",
@@ -114,7 +124,10 @@ export default {
             },
             {
               key: "Path",
-              value: this.fileInfo.path
+              value: parent,
+              click: () => {
+                this.clickPath(parent)
+              }
             },
             {
               key: "Size",
@@ -156,5 +169,9 @@ export default {
 </script>
 
 <style scoped>
-
+.clickable{
+  cursor: pointer;
+  color: #1890ff;
+  text-decoration: underline;
+}
 </style>

@@ -7,8 +7,11 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@cloudgeek/vue3-video-player": "^0.3.10",
     "@mdi/font": "7.0.96",
+    "aplayer": "^1.10.1",
     "crypto-js": "^4.1.1",
+    "mui-player": "^1.8.1",
     "roboto-fontface": "*",
     "vue": "^3.2.0",
     "vuetify": "^3.0.0",

@@ -24,7 +24,7 @@ mounts = {
 perms = {
     Path('D:/Unity 3D/Projects'): {
         'file': 'D:/Unity 3D/Projects',   # 目标目录/文件的绝对路径
-        'visibleGroup': ['admin', 'restrict'],   # 可见的权限组
+        'visibleGroup': ['super', 'admin', 'restrict'],   # 可见的权限组
         'visibleUser': ['admin'],   # 可见的用户，覆盖权限组规则
         'invisibleUser': ['user1'],   # 不可见的用户，覆盖权限组规则
         'rules': [
@@ -42,7 +42,7 @@ perms = {
     },
     Path('D:/_Pictures/【图片】'): {
         'file': 'D:/_Pictures/【图片】',
-        'visibleGroup': ['admin', 'restrict'],
+        'visibleGroup': ['super', 'admin', 'restrict'],
         'visibleUser': ['admin'],
         'invisibleUser': ['user1'],
         'rules': [
@@ -64,7 +64,25 @@ perms = {
         'visibleUser': [],
         'invisibleUser': [],
         'rules': []
-    }
+    },
+    Path('D:/_Pictures/【图片】/测试'): {
+        'file': 'D:/_Pictures/【图片】/测试',
+        'visibleGroup': ['super', 'admin', 'restrict'],
+        'visibleUser': ['admin'],
+        'invisibleUser': ['user1'],
+        'rules': [
+            {
+                'type': 0,
+                'target': 'admin',
+                'permission': '*****'
+            },
+            {
+                'type': 0,
+                'target': 'restrict',
+                'permission': '-----'
+            }
+        ]
+    },
 }
 
 # 忽略列表（使用绝对路径）
@@ -104,6 +122,7 @@ def load_data():
 def save_data():
     dsh.serialize_mounts(mounts, save_path=cfg.mount_data_path)
     dsh.serialize_perms(perms, save_path=cfg.perm_data_path)
+    dsh.serialize_ignores(ignores, save_path=cfg.ignore_data_path)
 
 
 def get_files_from_mounts(target: Path):
@@ -144,7 +163,9 @@ def get_file_real_path(path, check_exists=True):
         
         if path.is_relative_to(root):
             real = Path(mount['target']) / path.relative_to(mount['root'])
-            return real.resolve() if not check_exists or real.exists() else None
+            if check_exists and not real.exists():
+                continue
+            return real.resolve()
     return None
 
 
@@ -170,18 +191,23 @@ def validate_mount(target: Path, root):
     return True
 
 
-def add_mount(target: Path, root):
+def get_mounts():
+    return list(mounts.values())
+
+
+def add_mount(target: Path, root: str):
     if not validate_mount(target, root):
         return False
 
     mounts[target.resolve()] = {
-        'target': str(target.resolve()),
-        'root': root
+        'target': str(target.resolve()).replace('\\', '/'),
+        'root': root.replace('\\', '/')
     }
 
     if target in ignores:
         ignores.remove(target)
     
+    perms[target.resolve()] = generate_default_permission(root)
     save_data()
 
     return True
@@ -191,7 +217,8 @@ def remove_mount(target: Path):
     if target not in mounts:
         return False
 
-    del mounts[target]
+    del mounts[target.resolve()]
+    del perms[target.resolve()]
     save_data()
 
     return True
@@ -238,6 +265,13 @@ def is_mounted(target: Path):
         if target.is_relative_to(mount):
             return True
     return False
+
+
+def is_mount_point(root: str):
+    # 检查指定路径是否为挂载点
+    for mount in mounts.values():
+        if fh.same_path(Path(root), Path(mount['root'])):
+            return True
 
 
 def user_visible(path, user_id):
@@ -410,7 +444,7 @@ def get_file_info(paths: list, keys: list, user_id: str):
 def generate_default_permission(path):
     result = {
         'file': '',
-        'visibleGroup': [],
+        'visibleGroup': cfg.super_group.copy(),
         'visibleUser': [],
         'invisibleUser': [],
         'rules': []
@@ -442,6 +476,39 @@ def generate_default_permission(path):
         break
 
     return result
+
+
+def validate_perm_info(perm):
+    if 'file' not in perm or not isinstance(perm['file'], str):
+        return False
+    if 'visibleGroup' not in perm or not isinstance(perm['visibleGroup'], list):
+        return False
+    if 'visibleUser' not in perm or not isinstance(perm['visibleUser'], list):
+        return False
+    if 'invisibleUser' not in perm or not isinstance(perm['invisibleUser'], list):
+        return False
+    if 'rules' not in perm or not isinstance(perm['rules'], list):
+        return False
+    
+    for group in perm['visibleGroup']:
+        if not isinstance(group, str):
+            return False
+    for user in perm['visibleUser']:
+        if not isinstance(user, str):
+            return False
+    for user in perm['invisibleUser']:
+        if not isinstance(user, str):
+            return False
+    for rule in perm['rules']:
+        if not isinstance(rule, dict):
+            return False
+        if 'type' not in rule or not isinstance(rule['type'], int):
+            return False
+        if 'target' not in rule or not isinstance(rule['target'], str):
+            return False
+        if 'permission' not in rule or not isinstance(rule['permission'], str):
+            return False
+    return True
 
 
 def update_rule(perm, rule):
@@ -527,26 +594,40 @@ def remove_visibility_rule(path, key: str, value: str):
     save_data()
 
 
+def get_file_perm_info(path):
+    path = Path(path)
+    real_path = get_file_real_path(path)
+    if real_path is None:
+        return None
+    
+    perm = perms.get(real_path, None)
+    return perm
+
+
 def add_ignore(target):
     target = Path(target).resolve()
     if target not in ignores:
         ignores.append(target)
-    save_data()
+        save_data()
+        return True
+    return False
 
 
 def remove_ignore(target):
     target = Path(target).resolve()
     if target in ignores:
         ignores.remove(target)
-    save_data()
+        save_data()
+        return True
+    return False
 
 
 def get_ignore():
-    return ignores
+    return [str(ignore) for ignore in ignores]
 
 
 def get_mounts():
-    return mounts
+    return list(mounts.values())
 
 
 def is_ignored(path):
@@ -594,6 +675,17 @@ def delete_file(path, user_id):
         return False
     
     return fh.delete_file(real_path)
+
+
+def delete_files(paths, user_id):
+    for path in paths:
+        if not check_permission(path, user_id, 'x'):
+            return False
+    
+    for path in paths:
+        delete_file(path, user_id)
+
+    return True
 
 
 def rename_file(path, new_name, user_id):
@@ -698,30 +790,33 @@ def list_file(user_id, parent):
         parent_visible = user_visible(parent, user_id)
         parent_perm = get_file_permission(parent, user_id)
         for f in ls:
-            path = parent / f
-            if user_visible_by_parent(path, user_id, parent_visible):
-                path = fh.to_path_str(path)
-                real = real_path / f
-                type = 0 if real.is_dir() else 1
+            try:
+                path = parent / f
+                if user_visible_by_parent(path, user_id, parent_visible):
+                    path = fh.to_path_str(path)
+                    real = real_path / f
+                    type = 0 if real.is_dir() else 1
 
-                time = None
-                time_created = None
-                size = None
-                if real is not None:
-                    time = fh.get_file_last_modified(real)
-                    time_created = fh.get_file_created(real)
-                    size = fh.get_file_size(real)
-                
-                perm = get_file_permission_by_parent(path, user_id, parent_perm, real_path=real, parent_visible=parent_visible, visible=True)
+                    time = None
+                    time_created = None
+                    size = None
+                    if real is not None:
+                        time = fh.get_file_last_modified(real)
+                        time_created = fh.get_file_created(real)
+                        size = fh.get_file_size(real)
+                    
+                    perm = get_file_permission_by_parent(path, user_id, parent_perm, real_path=real, parent_visible=parent_visible, visible=True)
 
-                result[path] = {
-                    'path': path,
-                    'type': type,
-                    'time': time,
-                    'time_created': time_created,
-                    'size': size,
-                    'perm': perm
-                }
+                    result[path] = {
+                        'path': path,
+                        'type': type,
+                        'time': time,
+                        'time_created': time_created,
+                        'size': size,
+                        'perm': perm
+                    }
+            except:
+                pass
     
     for file in get_files_from_mounts(parent):
         path = str(parent / file['name']).replace('\\', '/')

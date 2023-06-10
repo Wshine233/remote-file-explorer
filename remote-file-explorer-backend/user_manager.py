@@ -11,7 +11,8 @@ users = [
         'id': 'admin',
         'passwordHash': 'admin',
         'permissionGroup': 'admin',
-        'permission': "*****"
+        'permission': "*****",
+        'joinTime': 0
     }
 ]
 
@@ -76,7 +77,8 @@ def add_user(id, password_hash, name, permission_group, permission):
         'id': id,
         'passwordHash': password_hash,
         'permissionGroup': permission_group,
-        'permission': permission
+        'permission': permission,
+        'joinTime': crypto.time(),
     })
 
     save_data()

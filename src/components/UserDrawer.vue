@@ -3,7 +3,7 @@
     <v-navigation-drawer v-model="drawer" temporary>
       <v-list-item
         :title="userInfo.name"
-        :subtitle="userInfo.group"
+        :subtitle="userInfo.permissionGroup"
         height="70">
         <template #prepend>
           <v-avatar>
@@ -16,7 +16,7 @@
 
       <v-list density="compact" nav>
         <v-list-item prepend-icon="mdi-view-dashboard" title="Profile" value="profile" @click="clickItem('profile')"></v-list-item>
-        <v-list-item prepend-icon="mdi-history" title="History" value="history" @click="clickItem('history')"></v-list-item>
+        <v-list-item v-if="false" prepend-icon="mdi-history" title="History" value="history" @click="clickItem('history')"></v-list-item>
         <v-list-item prepend-icon="mdi-share" title="Sharing" value="sharing" @click="clickItem('sharing')"></v-list-item>
         <v-list-item prepend-icon="mdi-bell-outline" title="Notification" value="notification" @click="clickItem('notification')">
           <template #append>
@@ -42,7 +42,7 @@
     </v-navigation-drawer>
   </v-layout>
 
-  <ProfileDialog ref="profile" />
+  <ProfileDialog ref="profile" @update="getUserInfo" />
   <HistoryDialog ref="history" />
   <NotificationDialog ref="notification" />
   <SharingDialog ref="sharing" />
@@ -55,11 +55,12 @@ import {syncToLocalStorage, systemState} from "@/system";
 import HistoryDialog from "@/components/HistoryDialog";
 import NotificationDialog from "@/components/NotificationDialog";
 import SharingDialog from "@/components/SharingDialog";
+import {getUserProfile} from "@/utils";
 
 export default {
   name: "UserDrawer",
   components: {SharingDialog, NotificationDialog, HistoryDialog, ProfileDialog},
-  props: ['userInfo'],
+  props: [],
   setup(){
     const theme = useTheme()
 
@@ -76,7 +77,11 @@ export default {
       drawer: false,
       darkMode: false,
       unread: 0,
-      unreadColor: 'info'
+      unreadColor: 'info',
+      userInfo: {
+        name: 'Loading...',
+        group: 'Loading...'
+      }
     }
   },
   computed: {
@@ -84,7 +89,7 @@ export default {
   methods: {
     clickItem(item) {
       if (item === 'profile') {
-        this.$refs.profile.dialog = true
+        this.$refs.profile.show(this.userInfo)
       } else if (item === 'history') {
         this.$refs.history.dialog = true
       } else if(item === 'logout'){
@@ -113,6 +118,21 @@ export default {
       systemState.unread = 11
       systemState.unreadImportant = false
       syncToLocalStorage()
+    },
+    getUserInfo(){
+      getUserProfile().then((data)=>{
+        console.log(data)
+        this.userInfo = data
+      }).catch(err => {
+        window.alert(err.message)
+      })
+    }
+  },
+  watch:{
+    drawer(val){
+      if(val){
+        this.getUserInfo()
+      }
     }
   },
   created() {

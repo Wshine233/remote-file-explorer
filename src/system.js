@@ -11,6 +11,16 @@ export const defaultState = {
 let initialized = false
 
 export let systemState = reactive(defaultState)
+export let clipBoard = reactive({
+  '/Example Folder/Example File': {
+    type: 1,
+    mode: 'copy'
+  },
+  '/Example Folder/Example Folder 2': {
+    type: 0,
+    mode: 'move'
+  }
+})
 
 function initState() {
   if (localStorage.getItem("system-state") !== null) {

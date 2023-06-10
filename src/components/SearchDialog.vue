@@ -19,7 +19,7 @@
       </v-toolbar>
       <v-progress-linear v-if="loading" indeterminate color="warning" height="5"></v-progress-linear>
 
-      <FileListView v-if="!focus && !loading" :file-list="fileList" :select-mode="false" />
+      <FileListView v-if="!focus && !loading" :file-list="list" :select-mode="false" @clickItem="clickItem" @clickInfo="clickInfo" @holdItem="holdItem" />
 
     </v-card>
   </v-dialog>
@@ -27,6 +27,8 @@
   <v-lazy>
     <FilterDialog ref="filter" @save="updateFilter" />
   </v-lazy>
+
+  <DetailDialog ref="detail" @path-click="pathClick" />
 
   <v-snackbar v-model="popup" color="error" timeout="2000">
     Error: {{errorText}}
@@ -43,11 +45,14 @@ import PermWindow from "@/components/PermWindow";
 import FileListView from "@/components/FileListView";
 import FilterDialog from "@/components/FilterDialog";
 import axios from "axios";
+import {getDateStr, getReadableSize} from "@/utils";
+import DetailDialog from "@/components/DetailDialog";
 
 export default {
   name: "SearchDialog",
   props: ['path'],
-  components: {FilterDialog, FileListView, PermWindow, UserWindow, MountWindow},
+  emits: ['preview', 'path-click'],
+  components: {FilterDialog, FileListView, PermWindow, UserWindow, MountWindow, DetailDialog},
   data() {
     return {
       dialog: false,
@@ -63,7 +68,22 @@ export default {
     }
   },
   computed: {
-
+    list(){
+      let result = []
+      for(let i = 0; i < this.fileList.length; i++){
+        let file = this.fileList[i]
+        result.push({
+          name: file.name,
+          path: file.path,
+          time: file.time_modified,
+          timeStr: getDateStr(file.time_modified),
+          size: file.size,
+          sizeStr: getReadableSize(file.size),
+          selected: file.selected
+        })
+      }
+      return result
+    }
   },
   methods:{
     show(){
@@ -83,6 +103,24 @@ export default {
       this.filter = filter
       console.log(this.filter)
       this.findFile()
+    },
+    clickItem(item){
+      this.$emit('preview', item)
+    },
+    clickInfo(file){
+      this.$refs.detail.fileInfo = {
+        path: file.path,
+        type: file.type,
+        name: file.name
+      }
+      this.$refs.detail.show = true
+    },
+    holdItem(item){
+
+    },
+    pathClick(path){
+      this.$emit('path-click', path)
+      this.dialog = false
     },
     findFile(){
       if(this.keyword.length === 0){

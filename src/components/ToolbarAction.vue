@@ -5,7 +5,8 @@
       <span>Share</span>
     </v-btn>
 
-    <v-btn variant="text" :stacked="true" size="small" density="comfortable" :disabled="!canMove">
+    <v-btn variant="text" :stacked="true" size="small" density="comfortable" :disabled="!canRename"
+    @click="showRename">
       <v-icon>mdi-form-textbox</v-icon>
       <span>Rename</span>
     </v-btn>
@@ -15,7 +16,8 @@
       <span>Copy</span>
     </v-btn>
 
-    <v-btn variant="text" :stacked="true" size="small" density="comfortable" color="important" :disabled="!canDelete">
+    <v-btn variant="text" :stacked="true" size="small" density="comfortable" color="important" :disabled="!canDelete"
+    @click="deleteConfirm = true">
       <v-icon>mdi-delete</v-icon>
       <span>Delete</span>
     </v-btn>
@@ -25,7 +27,7 @@
       <span>More</span>
       <v-menu activator="parent" z-index="10087">
         <v-list>
-          <v-list-item title="Download" value="download" density="comfortable">
+          <v-list-item title="Download" value="download" density="comfortable" @click="download">
             <template v-slot:prepend>
               <v-icon style="margin-inline-end: 10px" icon="mdi-download"
                       size="26"></v-icon>
@@ -59,21 +61,44 @@
   </v-sheet>
 
   <ShareDrawer ref="share" />
+
+  <v-dialog v-model="deleteConfirm" persistent>
+    <v-card>
+      <v-card-title>Delete</v-card-title>
+      <v-card-text>Are you sure to delete selected files?</v-card-text>
+      <v-card-actions>
+        <v-spacer></v-spacer>
+        <v-btn text @click="deleteConfirm = false" :disabled="deleteLoading">Cancel</v-btn>
+        <v-btn text color="important" @click="deleteSelected" :loading="deleteLoading">Delete</v-btn>
+      </v-card-actions>
+    </v-card>
+  </v-dialog>
+
+  <RenameFileDialog ref="rename" @confirm="renamed"/>
+
+  <v-snackbar v-model="popup" timeout="2000" color="error">{{errMsg}}</v-snackbar>
 </template>
 
 <script>
 import axios from "axios";
 import {systemState} from "@/system";
 import ShareDrawer from "@/components/ShareDrawer";
+import {post} from "@/utils";
+import RenameFileDialog from "@/components/RenameFileDialog";
 
 export default {
   name: "ToolbarAction",
-  components: {ShareDrawer},
+  components: {RenameFileDialog, ShareDrawer},
   props: ['selectList', 'base'],
-  emits: ['selectAll', 'selectInvert'],
+  emits: ['selectAll', 'selectInvert', 'delete', 'rename'],
   data() {
     return {
-      permission: '-----'
+      permission: '-----',
+      errMsg: '',
+      popup: false,
+
+      deleteConfirm: false,
+      deleteLoading: false
     }
   },
   computed: {
@@ -90,7 +115,7 @@ export default {
       return this.permission[3] === 'm' && this.permission[2] === 'x'
     },
     canRename() {
-      return this.permission[3] === 'm'
+      return this.permission[3] === 'm' && this.selectList.length === 1
     },
     canCreate() {
       //父文件夹的a
@@ -106,6 +131,10 @@ export default {
   methods: {
     getParent() {
       return this.base
+    },
+    popupMsg(msg) {
+      this.errMsg = msg
+      this.popup = true
     },
     updatePermissions() {
       let perms = []
@@ -135,6 +164,54 @@ export default {
     },
     showShare(){
       this.$refs.share.show()
+    },
+    showRename(){
+      this.$refs.rename.show(this.selectList[0])
+    },
+    renamed(){
+      this.$emit('rename')
+    },
+    download(){
+      if(this.selectList.length !== 1){
+        window.alert("暂不支持同时下载多个文件")
+        return
+      }
+      let file = this.selectList[0]
+      if(file.type === 0){
+        window.alert("暂不支持下载文件夹")
+        return
+      }
+
+      post('/file/check-perm', {
+        sessionId: systemState.currentSession,
+        path: file.path,
+        perm: 'd'
+      }).then(res => {
+        if(res.data){
+          window.open(systemState.globalSettings.backendUrl + '/file/download?sessionId=' + systemState.currentSession + '&path=' + file.path)
+        }else{
+          this.popupMsg("You don't have permission to download this file.")
+        }
+      })
+    },
+    deleteSelected(){
+      this.deleteLoading = true
+      let paths = []
+      for(let file of this.selectList){
+        paths.push(file.path)
+      }
+
+      post('/file/delete', {
+        sessionId: systemState.currentSession,
+        paths: paths
+      }).then(res => {
+        this.$emit('delete')
+        this.deleteConfirm = false
+        this.deleteLoading = false
+      }).catch(err => {
+        this.deleteLoading = false
+        this.popupMsg(err.message)
+      })
     }
   },
   watch: {
