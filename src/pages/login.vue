@@ -9,12 +9,12 @@
       <div id="password-div" class="input-field">
         <InputField label="密码" type="password" name="password" ref="password"/>
       </div>
-      <div>
+<!--      <div>
         <div class="check-box">
           <input type="checkbox" name="remember-me" id="remember-me"/>
           <label for="remember-me">自动登录</label>
         </div>
-      </div>
+      </div>-->
       <div>
         <button class="action-btn" type="submit" @click.prevent="login">登录</button>
       </div>

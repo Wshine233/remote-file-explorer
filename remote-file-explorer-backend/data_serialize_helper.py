@@ -1,7 +1,9 @@
 import json
 from pathlib import Path
+import shutil
 from typing import Union
 import file_helper as fh
+import crypto
 
 
 """通用序列化方法"""
@@ -12,11 +14,15 @@ def serialize(data, save_path: Union[str, None]=None):
     raw = json.dumps(data)
     if save_path is not None:
         path = Path(save_path)
-        old_path = Path(save_path + '.old')
+        old_path = Path(save_path + '.' + str(crypto.time()) + '.old')
+        if old_path.exists():
+            old_path.unlink()
         if path.exists():
-            path.rename(old_path)
+            shutil.copy(save_path, str(old_path))
         if not path.parent.exists():
             fh.create_folder(path.parent)
+        if path.exists():
+            path.unlink()
         with open(save_path, 'x') as f:
             f.write(raw)
         if old_path.exists():

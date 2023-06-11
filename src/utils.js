@@ -1,6 +1,6 @@
 import axios from "axios";
 import {systemState} from "@/system";
-import {requestGetUserInfo, requestUpdateUserInfo} from "@/user-manager";
+import {hashPassword, requestGetUserInfo, requestUpdateUserInfo, requestUpdateUserPassword} from "@/user-manager";
 
 export function getTimeStr(time){
   console.log(`time: ${time}`)
@@ -154,7 +154,7 @@ export function getFileExtType(ext, type = 1) {
     return 'picture'
   }
 
-  if(['mp4', 'rmvb', 'webm', 'ogg', 'flv', 'avi', 'mov', 'wmv', 'mkv'].includes(ext)){
+  if(['mp4', 'rmvb', 'webm', 'flv', 'avi', 'mov', 'wmv', 'mkv'].includes(ext)){
     return 'video'
   }
 
@@ -295,7 +295,7 @@ export function getUserGroup(){
 
 
 export function getUserProfile(){
-  let request = requestGetUserInfo(systemState.currentSession, ['name', 'email', 'gender', 'description', 'joinTime', 'permissionGroup'])
+  let request = requestGetUserInfo(systemState.currentSession, ['name', 'email', 'gender', 'description', 'joinTime', 'permissionGroup', 'permission'])
   return new Promise((resolve, reject) => {
     request.then(res => {
       if(res.success){
@@ -310,6 +310,39 @@ export function getUserProfile(){
 
 export function setUserProfile(keys, values){
   let request = requestUpdateUserInfo(systemState.currentSession, keys, values)
+  return new Promise((resolve, reject) => {
+    request.then(res => {
+      if(res.success){
+        resolve(res)
+      }else{
+        reject(res)
+      }
+    })
+  })
+}
+
+
+export function listUsers(){
+  let request = post('/user/list', {
+    sessionId: systemState.currentSession,
+    keys: ['id', 'name', 'email', 'gender', 'description', 'joinTime', 'permissionGroup', 'permission']
+  })
+
+  return new Promise((resolve, reject) => {
+    request.then(res => {
+      resolve(res.data)
+    }).catch(err => {
+      reject(err)
+    })
+  })
+}
+
+
+export function updatePassword(oldPassword, newPassword){
+  let oldHash = hashPassword(oldPassword)
+  let newHash = hashPassword(newPassword)
+
+  let request = requestUpdateUserPassword(systemState.currentSession, oldHash, newHash)
   return new Promise((resolve, reject) => {
     request.then(res => {
       if(res.success){

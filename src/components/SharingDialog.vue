@@ -27,7 +27,7 @@
             </p>
           </v-expansion-panel-text>
           <v-expansion-panel-text>
-            <v-btn variant="outlined">Copy share link and password</v-btn>
+            <v-btn v-if="!item.outdated" variant="outlined">Copy share link and password</v-btn>
           </v-expansion-panel-text>
         </v-expansion-panel>
       </v-expansion-panels>

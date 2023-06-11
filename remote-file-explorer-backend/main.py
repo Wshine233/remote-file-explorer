@@ -47,7 +47,31 @@ def super():
             return rh.pack_response(True, 'Normal user.', False)
     except Exception as e:
         return rh.pack_response(False, 'Request error.', e)
+
+
+@app.route('/user/list', methods=['POST'])
+def list_users():
+    try:
+        data = request.get_json()
+        session = data.get('sessionId')
+        keys = data.get('keys')
+        if session is None or keys is None:
+            return rh.pack_response(False, 'Request format error.')
         
+        user = um.verify_session(session)
+        if user:
+            user = um.get_user_id(session)
+            if user is None:
+                return rh.pack_response(False, 'Unknown error. User not found.')
+        else:
+            return rh.pack_response(False, 'Session expired. Please login again.')
+        
+        if um.get_user_info(user, ['permissionGroup'])['permissionGroup'] in cfg.super_group:
+            return rh.pack_response(True, 'Super user.', um.list_users(keys))
+        else:
+            return rh.pack_response(False, 'Permission denied.')
+    except Exception as e:
+        return rh.pack_response(False, 'Request error.', e)
 
 
 @app.route('/user/login', methods=['POST'])
@@ -149,14 +173,100 @@ def update_user():
         return rh.pack_response(False, 'Request error.', e)
 
 
-@app.route('/user/delete-user', methods=['POST'])
+@app.route('/user/set-info', methods=['POST'])
+def set_info():
+    try:
+        data = request.get_json()
+        session = data.get('sessionId')
+        keys = data.get('keys')
+        values = data.get('values')
+        user_id = data.get('userId')
+        if session is None or keys is None or values is None or user_id is None:
+            return rh.pack_response(False, 'Request format error.')
+        
+        user = um.verify_session(session)
+        if user:
+            user = um.get_user_id(session)
+            if user is None:
+                return rh.pack_response(False, 'Unknown error. User not found.')
+        else:
+            return rh.pack_response(False, 'Session expired. Please login again.')
+        
+        if um.get_user_info(user, ['permissionGroup'])['permissionGroup'] not in cfg.super_group:
+            return rh.pack_response(False, 'Permission denied.')
+        
+        if user == user_id and 'permissionGroup' in keys:
+            # 不能修改自己的权限组至非超级用户组，否则会导致无法管理信息
+            if values[keys.index('permissionGroup')] not in cfg.super_group:
+                return rh.pack_response(False, 'Cannot change your own permission group to non-super group.')
+            
+        
+        result = um.update_user(user_id, keys, values)
+        if result:
+            return rh.pack_response(True, 'Update user info success.')
+        else:
+            return rh.pack_response(False, 'Update user info failed.')
+    except Exception as e:
+        return rh.pack_response(False, 'Request error.', e)
+
+
+@app.route('/user/remove', methods=['POST'])
 def delete_user():
-    pass
+    try:
+        data = request.get_json()
+        session = data.get('sessionId')
+        user_id = data.get('userId')
+        if session is None or user_id is None:
+            return rh.pack_response(False, 'Request format error.')
+        
+        user = um.verify_session(session)
+        if user:
+            user = um.get_user_id(session)
+            if user is None:
+                return rh.pack_response(False, 'Unknown error. User not found.')
+        else:
+            return rh.pack_response(False, 'Session expired. Please login again.')
+        
+        if um.get_user_info(user, ['permissionGroup'])['permissionGroup'] not in cfg.super_group:
+            return rh.pack_response(False, 'Permission denied.')
+        
+        if user == user_id:
+            return rh.pack_response(False, 'You cannot delete yourself.')
+        
+        result = um.remove_user(user_id)
+        if result:
+            return rh.pack_response(True, 'Delete user success.')
+        else:
+            return rh.pack_response(False, 'Delete user failed.')
+    except Exception as e:
+        return rh.pack_response(False, 'Request error.', e)
 
 
 @app.route('/user/update-password', methods=['POST'])
 def update_password():
-    pass
+    try:
+        data = request.get_json()
+        session = data.get('sessionId')
+        old_password = data.get('oldHash')
+        new_password = data.get('newHash')
+        if session is None or old_password is None or new_password is None:
+            return rh.pack_response(False, 'Request format error.')
+        
+        user = um.verify_session(session)
+        if user:
+            user = um.get_user_id(session)
+            if user is None:
+                return rh.pack_response(False, 'Unknown error. User not found.')
+        else:
+            return rh.pack_response(False, 'Session expired. Please login again.')
+        
+        result = um.update_password(user, old_password, new_password)
+        if result:
+            return rh.pack_response(True, 'Update password success.')
+        else:
+            return rh.pack_response(False, 'Update password failed. Old password incorrect.')
+    except Exception as e:
+        return rh.pack_response(False, 'Request error.', e)
 
 
 @app.route('/user/get-user', methods=['POST'])
@@ -331,8 +441,57 @@ def download():
 
 @app.route('/file/upload', methods=['POST'])
 def upload():
-    pass
+    try:
+        session = request.form.get('sessionId')
+        root = request.form.get('root')
+        files = request.files.getlist('files')
+        if session is None or root is None or files is None:
+            return rh.pack_response(False, 'Request format error.')
+        
+        user = um.verify_session(session)
+        if user:
+            user = um.get_user_id(session)
+            if user is None:
+                return rh.pack_response(False, 'Unknown error. User not found.')
+        else:
+            return rh.pack_response(False, 'Session expired. Please login again.')
+        
+        if root == '/':
+            return rh.pack_response(False, "You cannot upload files to root '/'.")
+        
+        if not fm.check_permission(root, user, 'a'):
+            return rh.pack_response(False, "You don't have permission to upload files to this directory.")
+        
+        root = Path(root)
+        real_root = fm.get_file_real_path(root)
+        if real_root is None:
+            return rh.pack_response(False, 'Directory not found. Maybe it is a mount point.')
+        
+        link = []
+        for file in files:
+            filename = root / file.filename
+            real_path = fm.get_file_real_path(filename)
+            if real_path is not None:
+                return rh.pack_response(False, f'File {file.filename} already exists.')
+            real_path = fm.get_file_real_path(filename, check_exists=False)
+            
+            if real_path is None:
+                return rh.pack_response(False, 'Unknown error. Cannot get real path.')
+            if real_path.exists():
+                return rh.pack_response(False, f'File {file.filename} already exists.')
+            
+            real_path.parent.mkdir(parents=True, exist_ok=True)
+            link.append({
+                'path': real_path,
+                'file': file
+            })
 
+        for item in link:
+            item['file'].save(str(item['path']))
+
+        return rh.pack_response(True, 'Success.')
+    except Exception as e:
+        return rh.pack_response(False, 'Request error.', e)
 
 @app.route('/file/delete', methods=['POST'])
 def delete():
@@ -509,7 +668,15 @@ def set_rule():
         if not fm.validate_perm_info(rule):
             return rh.pack_response(False, 'Invalid rule format.')
         
-        fm.perms[real_path] = rule
+        for invisibleUser in rule['invisibleUser']:
+            info = um.get_user_by_id(invisibleUser)
+            if info is not None and info['permissionGroup'] in cfg.super_group:
+                return rh.pack_response(False, 'Cannot set invisible to super user.')
+
+        result = fm.set_perm_info(rule)
+        if not result:
+            return rh.pack_response(False, 'Failed.')
+
         return rh.pack_response(True, 'Success.')
     except Exception as e:
         return rh.pack_response(False, 'Request error.', e)
@@ -781,6 +948,125 @@ def remove_ignore():
         return rh.pack_response(True, 'Success.')
     except Exception as e:
         return rh.pack_response(False, 'Request error.', e)
+
+
+"""权限部分"""
+
+@app.route('/perm/list', methods=['POST'])
+def get_perm_groups():
+    try:
+        data = request.get_json()
+        session = data.get('sessionId')
+        if session is None:
+            return rh.pack_response(False, 'Request format error.')
+        
+        user = um.verify_session(session)
+        if user:
+            user = um.get_user_id(session)
+            if user is None:
+                return rh.pack_response(False, 'Unknown error. User not found.')
+        else:
+            return rh.pack_response(False, 'Session expired. Please login again.')
+        
+        # if um.get_user_info(user, ['permissionGroup'])['permissionGroup'] not in cfg.super_group:
+        #     return rh.pack_response(False, 'Permission denied.')
+        
+        result = pm.permission_groups
+        if result is None:
+            return rh.pack_response(True, 'Permission group not found.', [])
+        return rh.pack_response(True, 'Success.', result)
+    except Exception as e:
+        return rh.pack_response(False, 'Request error.', e)
+
+
+@app.route('/perm/add', methods=['POST'])
+def add_perm_group():
+    try:
+        data = request.get_json()
+        session = data.get('sessionId')
+        name = data.get('id')
+        perm = data.get('perm')
+        if session is None or name is None or perm is None:
+            return rh.pack_response(False, 'Request format error.')
+        
+        user = um.verify_session(session)
+        if user:
+            user = um.get_user_id(session)
+            if user is None:
+                return rh.pack_response(False, 'Unknown error. User not found.')
+        else:
+            return rh.pack_response(False, 'Session expired. Please login again.')
+
+        if um.get_user_info(user, ['permissionGroup'])['permissionGroup'] not in cfg.super_group:
+            return rh.pack_response(False, 'Permission denied.')
+        
+        result = pm.add_group(name, perm)
+        if not result:
+            return rh.pack_response(False, 'Permission group already exists. Or your perm format is wrong.')
+        return rh.pack_response(True, 'Success.')
+    except Exception as e:
+        return rh.pack_response(False, 'Request error.', e)
+
+
+@app.route('/perm/remove', methods=['POST'])
+def remove_perm_group():
+    try:
+        data = request.get_json()
+        session = data.get('sessionId')
+        name = data.get('id')
+        if session is None or name is None:
+            return rh.pack_response(False, 'Request format error.')
+        
+        user = um.verify_session(session)
+        if user:
+            user = um.get_user_id(session)
+            if user is None:
+                return rh.pack_response(False, 'Unknown error. User not found.')
+        else:
+            return rh.pack_response(False, 'Session expired. Please login again.')
+
+        if um.get_user_info(user, ['permissionGroup'])['permissionGroup'] not in cfg.super_group:
+            return rh.pack_response(False, 'Permission denied.')
+        
+        if name == pm.get_default_group():
+            return rh.pack_response(False, 'Cannot remove default group.')
+        
+        result = pm.remove_group(name)
+        if not result:
+            return rh.pack_response(False, 'Permission group not found.')
+        return rh.pack_response(True, 'Success.')
+    except Exception as e:
+        return rh.pack_response(False, 'Request error.', e)
+
+
+@app.route('/perm/update', methods=['POST'])
+def update_perm_group():
+    try:
+        data = request.get_json()
+        session = data.get('sessionId')
+        name = data.get('id')
+        perm = data.get('perm')
+        if session is None or name is None or perm is None:
+            return rh.pack_response(False, 'Request format error.')
+        
+        user = um.verify_session(session)
+        if user:
+            user = um.get_user_id(session)
+            if user is None:
+                return rh.pack_response(False, 'Unknown error. User not found.')
+        else:
+            return rh.pack_response(False, 'Session expired. Please login again.')
+
+        if um.get_user_info(user, ['permissionGroup'])['permissionGroup'] not in cfg.super_group:
+            return rh.pack_response(False, 'Permission denied.')
+        
+        result = pm.update_group(name, perm)
+        if not result:
+            return rh.pack_response(False, 'Permission group not found. Or your perm format is wrong.')
+        return rh.pack_response(True, 'Success.')
+    except Exception as e:
+        return rh.pack_response(False, 'Request error.', e)
+
 
 
 

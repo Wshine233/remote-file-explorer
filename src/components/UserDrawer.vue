@@ -17,12 +17,13 @@
       <v-list density="compact" nav>
         <v-list-item prepend-icon="mdi-view-dashboard" title="Profile" value="profile" @click="clickItem('profile')"></v-list-item>
         <v-list-item v-if="false" prepend-icon="mdi-history" title="History" value="history" @click="clickItem('history')"></v-list-item>
-        <v-list-item prepend-icon="mdi-share" title="Sharing" value="sharing" @click="clickItem('sharing')"></v-list-item>
-        <v-list-item prepend-icon="mdi-bell-outline" title="Notification" value="notification" @click="clickItem('notification')">
+        <v-list-item v-if="false" prepend-icon="mdi-share" title="Sharing" value="sharing" @click="clickItem('sharing')"></v-list-item>
+        <v-list-item v-if="false" prepend-icon="mdi-bell-outline" title="Notification" value="notification" @click="clickItem('notification')">
           <template #append>
             <v-badge v-if="unread > 0" :color="unreadColor" :content="unread" inline></v-badge>
           </template>
         </v-list-item>
+        <v-list-item prepend-icon="mdi-cog" title="Settings" value="settings" @click="clickItem('settings')"></v-list-item>
         <v-list-item prepend-icon="mdi-logout" title="Logout" value="logout" @click="clickItem('logout')"></v-list-item>
       </v-list>
 
@@ -46,6 +47,7 @@
   <HistoryDialog ref="history" />
   <NotificationDialog ref="notification" />
   <SharingDialog ref="sharing" />
+  <Settings ref="settings"/>
 </template>
 
 <script>
@@ -56,10 +58,11 @@ import HistoryDialog from "@/components/HistoryDialog";
 import NotificationDialog from "@/components/NotificationDialog";
 import SharingDialog from "@/components/SharingDialog";
 import {getUserProfile} from "@/utils";
+import Settings from "@/components/Settings";
 
 export default {
   name: "UserDrawer",
-  components: {SharingDialog, NotificationDialog, HistoryDialog, ProfileDialog},
+  components: {Settings, SharingDialog, NotificationDialog, HistoryDialog, ProfileDialog},
   props: [],
   setup(){
     const theme = useTheme()
@@ -98,6 +101,8 @@ export default {
         this.$refs.notification.dialog = true
       }else if(item === 'sharing'){
         this.$refs.sharing.dialog = true
+      }else if(item === 'settings'){
+        this.$refs.settings.dialog = true
       }
     },
     logout(){

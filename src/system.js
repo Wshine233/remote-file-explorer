@@ -29,12 +29,21 @@ function initState() {
     localStorage.setItem("system-state", JSON.stringify(defaultState))
   }
   systemState.globalSettings.virtualMode = false
-  systemState.globalSettings.backendUrl = "http://localhost:8512"
+  systemState.globalSettings.backendUrl = "http://192.168.0.135:8512"
+
+  if (localStorage.getItem("clip-board") !== null) {
+    clipBoard = JSON.parse(localStorage.getItem("clip-board"))
+  } else {
+    clipBoard = {}
+  }
 }
 
 export function syncToLocalStorage() {
   localStorage.setItem("system-state", JSON.stringify(systemState))
   console.log("系统状态已同步到本地存储，数据明细：\n" + JSON.stringify(systemState))
+
+  localStorage.setItem("clip-board", JSON.stringify(clipBoard))
+  console.log("剪贴板已同步到本地存储，数据明细：\n" + JSON.stringify(clipBoard))
 }
 
 function init(force = false) {

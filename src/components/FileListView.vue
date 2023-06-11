@@ -4,7 +4,7 @@
       <v-list-item variant="flat"
                    :title="item.name"
                    :value="item"
-                   :subtitle="`${item.timeStr}&nbsp;&nbsp;&nbsp;${item.sizeStr}`"
+                   :subtitle="`${item.timeStr}&nbsp;&nbsp;&nbsp;${item.type === 0 ? '' : item.sizeStr}`"
                    density="comfortable"
                    height="60"
                    :class="{'user-select-disabled': true, 'item-selected': item.selected}"

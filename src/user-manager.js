@@ -430,7 +430,7 @@ export function requestUpdateUserPassword(sessionId, oldPasswordHash, newPasswor
     let request = axios.post("/user/update-password", {
       sessionId: sessionId,
       oldHash: oldPasswordHash,
-      hash: newPasswordHash
+      newHash: newPasswordHash
     })
     return new Promise((resolve) => {
       request.then(response => {

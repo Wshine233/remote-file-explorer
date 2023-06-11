@@ -19,7 +19,7 @@
       </div>
       <div>
         <div class="check-box">
-          <input type="checkbox" name="remember-me" id="remember-me"/>
+          <input v-model="protocol" type="checkbox" name="remember-me" id="remember-me"/>
           <label for="remember-me">我同意 <a ref="protocol" href="" @click.prevent="popupProtocol">用户使用协议</a></label>
         </div>
       </div>
@@ -31,6 +31,14 @@
       </div>
     </form>
   </div>
+
+  <Transition type="transition">
+    <div v-if="protocolDialog" id="protocol" class="dialog">
+      <h1>用户使用协议</h1>
+      <p>{{protocolContent}}</p>
+      <button class="action-btn" @click="closeProtocol">我已阅读</button>
+    </div>
+  </Transition>
 </template>
 
 <script>
@@ -48,17 +56,57 @@ export default {
       username: "",
       password: "",
       passwordConfirm: "",
-      errMsgUser: "用户名长度不得小于4",
+      errMsgUser: "用户名长度不得小于4或大于12，且只能包含数字或字母以及下划线",
       errMsgPass: "密码长度不得小于6或大于16",
-      errMsgConfirm: "两次密码输入不一致"
+      errMsgConfirm: "两次密码输入不一致",
+      protocol: false,
+
+      protocolDialog: false,
+      protocolContent:
+        "欢迎使用远程文件管理器！在开始使用本应用程序之前，请仔细阅读以下用户使用协议。通过使用本应用程序，即表示您同意遵守以下条款和条件：\n" +
+        "\n" +
+        "1. 注册与账户安全：\n" +
+        "   a. 为了使用远程文件管理器，您需要注册一个账户，并提供准确、最新和完整的个人信息。\n" +
+        "   b. 您是唯一对您的账户负责的人，因此，您需对您的账户和密码的保密负全部责任。\n" +
+        "   c. 如果您怀疑有人未经授权访问或使用您的账户，请立即通知我们。\n" +
+        "\n" +
+        "2. 使用权限和限制：\n" +
+        "   a. 您可以使用远程文件管理器上传、下载、浏览和管理您的个人文件和文件夹。\n" +
+        "   b. 您不得使用远程文件管理器传输、存储、共享或访问任何非法、侵犯他人隐私或知识产权的内容。\n" +
+        "   c. 您不得通过远程文件管理器执行任何恶意活动，包括但不限于病毒传播、黑客攻击等。\n" +
+        "\n" +
+        "3. 数据安全和隐私：\n" +
+        "   a. 我们将采取合理的技术和组织措施来保护您在远程文件管理器中存储的数据的安全。\n" +
+        "   b. 您应该自行负责备份您的重要数据，以防止数据丢失或损坏。\n" +
+        "   c. 我们将遵守适用的隐私法律和政策，保护您的个人信息的隐私和安全。\n" +
+        "\n" +
+        "4. 知识产权：\n" +
+        "   a. 远程文件管理器和其中包含的所有内容（如文本、图形、图像、标志、图标、音频和视频片段等）的所有权归属于我们或我们的许可方。\n" +
+        "   b. 您不得以任何方式复制、修改、分发、传播、展示、出售或使用远程文件管理器的任何部分或内容，除非事先获得我们的书面许可。\n" +
+        "\n" +
+        "5. 责任限制：\n" +
+        "   a. 远程文件管理器仅按现有状况提供，不提供任何明示或暗示的担保或条件。\n" +
+        "   b. 我们不对远程文件管理器的使用中出现的任何损失、损害或任何间接、特殊、附带或相应的损害负责。\n" +
+        "   c. 我们不对由于使用或无法使用远程文件管理器而导致的数据丢失或损坏承担责任。\n" +
+        "\n" +
+        "6. 协议修改和终止：\n" +
+        "   a. 我们保留随时修改本用户使用协议的权利。修改后\n" +
+        "\n" +
+        "的协议将在我们的应用程序上发布，您继续使用远程文件管理器即表示您接受修改后的协议。\n" +
+        "   b. 我们保留随时终止、暂停或限制您对远程文件管理器的访问权利的权利。\n" +
+        "\n" +
+        "请注意，本用户使用协议构成您与我们之间关于远程文件管理器的完整协议，并取代您先前与我们之间就此事宜达成的任何口头或书面协议。如您不同意本协议的任何部分，请勿使用远程文件管理器。"
     }
   },
   methods: {
     popupProtocol() {
-      window.alert("这里以后要写一个弹出框组件代替alert");
+      this.protocolDialog = true;
+    },
+    closeProtocol(){
+      this.protocolDialog = false;
     },
     validateUsername() {
-      return this.username.length >= 4;
+      return this.username.length >= 4 && this.username.length <= 12 && /^[a-zA-Z0-9_]+$/.test(this.username);
     },
     validatePassword() {
       return this.password.length >= 6 && this.password.length <= 16;
@@ -69,7 +117,7 @@ export default {
     submitValidate() {
       let valid = true;
       if (!this.validateUsername()) {
-        this.errMsg = "用户名长度不得小于4";
+        this.errMsg = "用户名长度不得小于4或大于12，且只能包含数字或字母以及下划线";
         this.$refs['user-err'].style.display = "inline-block";
         valid = false;
       } else {
@@ -88,6 +136,11 @@ export default {
         valid = false;
       } else {
         this.$refs["confirm-err"].style.display = "none";
+      }
+
+      if (!this.protocol) {
+        alert("请同意用户使用协议");
+        valid = false;
       }
       return valid;
     },
@@ -193,5 +246,73 @@ a {
   margin-left: 5px;
   margin-top: -0.6rem;
   margin-bottom: 0.6rem;
+}
+
+.dialog{
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 100;
+  width: 80vw;
+  height: 80vh;
+  background: rgba(0, 0, 0, 0.6);
+  border-radius: 10px;
+
+  box-sizing: border-box;
+  padding: 20px;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+
+  transition: all 0.3s;
+}
+
+.dialog h1{
+  color: white;
+  font-size: 1.5rem;
+  margin-bottom: 20px;
+  margin-top: 0;
+  text-align: center;
+
+}
+
+.dialog p{
+  min-height: 40vh;
+  flex-grow: 1;
+  overflow: auto;
+  white-space: pre-wrap;
+
+  margin-top: 0;
+  padding: 10px 16px;
+  background-color: #ffffff;
+  border-radius: 10px;
+
+  line-height: 1.5;
+}
+
+.dialog button{
+  flex-shrink: 0;
+  width: 100%;
+  height: 2.6rem;
+  border: none;
+  border-radius: 5px;
+  background: #42b983;
+  color: white;
+  font-size: 1rem;
+  cursor: pointer;
+
+  transition: all 0.2s;
+}
+
+.v-enter-active,
+.v-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.v-enter-from,
+.v-leave-to {
+  opacity: 0;
 }
 </style>

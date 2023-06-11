@@ -1,7 +1,7 @@
 <template id="body">
   <UserDrawer ref="userDrawer" :user-info="userInfo"/>
-  <ViewSelectDialog ref="viewSelector" />
   <SortSelectDialog ref="sortSelector" @confirm="updateSortRule"/>
+<!--  <ViewSelectDialog ref="viewSelector" />-->
   <Settings ref="setting" />
   <SearchDialog ref="search" :path="path" @path-click="clickPath" @preview="file => tryPreview(file)" />
 
@@ -27,7 +27,7 @@
                       size="26"></v-icon>
             </template>
           </v-list-item>
-          <v-list-item title="Upload File" value="upload" density="comfortable">
+          <v-list-item title="Upload File" value="upload" density="comfortable" @click="showUpload">
             <template v-slot:prepend>
               <v-icon style="margin-inline-end: 10px" icon="mdi-upload"
                       size="26"></v-icon>
@@ -85,9 +85,9 @@
   <div style="position: sticky; bottom: 0; background-color: transparent">
     <AudioPreviewer ref="audioPreview" :src="previewSrc"/>
     <v-slide-y-reverse-transition>
-      <ToolbarAction v-if="selectMode" :select-list="selectList" :base="path" ref="actions"
+      <ToolbarAction v-if="selectMode" :select-list="selectList" :base="path" ref="actions" :super-user="superUser"
                      @selectAll="selectAll" @selectInvert="selectInvert"
-                     @delete="changePath(path)" @rename="changePath(path)"/>
+                     @delete="changePath(path)" @rename="changePath(path)" @permSet="changePath(path)"/>
     </v-slide-y-reverse-transition>
   </div>
 
@@ -97,6 +97,7 @@
 
   <CreateFolderDialog ref="createFolder" @confirm="changePath(path)" :path="path"/>
   <AddMountDialog ref="addMount" @confirm="changePath(path)" :path="path"/>
+  <UploadFileDialog ref="upload" @confirm="changePath(path)" :root="path"/>
 
   <ClipBoard />
 
@@ -109,7 +110,7 @@
 <script>
 import axios from "axios";
 import {systemState} from "@/system";
-import {getDateStr, getFileExtType, getReadableSize, getTimeStr, sortByFileName} from "@/utils";
+import {checkSuperUser, getDateStr, getFileExtType, getReadableSize, getTimeStr, sortByFileName} from "@/utils";
 import ToolbarAction from "@/components/ToolbarAction";
 import FileListView from "@/components/FileListView";
 import UserDrawer from "@/components/UserDrawer";
@@ -125,10 +126,12 @@ import TextPreviewDialog from "@/components/TextPreviewDialog";
 import CreateFolderDialog from "@/components/CreateFolderDialog";
 import ClipBoard from "@/components/ClipBoard";
 import AddMountDialog from "@/components/AddMountDialog";
+import UploadFileDialog from "@/components/UploadFileDialog";
 
 export default {
   name: "FileList",
   components: {
+    UploadFileDialog,
     AddMountDialog,
     ClipBoard,
     CreateFolderDialog,
@@ -160,6 +163,7 @@ export default {
         name: 'Wshine',
         group: 'admin'
       },
+      superUser: false,
       pathBreadcrumb: [
         {
           name: 'root',
@@ -217,6 +221,14 @@ export default {
     changePath(path){
       this.setSelectMode(false)
       this.getFileList(path)
+      this.checkSuper()
+    },
+    checkSuper(){
+      checkSuperUser().then(res => {
+        this.superUser = res
+      }).catch(err => {
+        console.log('failed to check super user: ', err.message)
+      })
     },
     updatePathBreadcrumb(){
       let list = []
@@ -328,9 +340,9 @@ export default {
     showDrawer(){
       this.$refs.userDrawer.drawer = true
     },
-    showViewSelector(){
+    /*showViewSelector(){
       this.$refs.viewSelector.dialog = true
-    },
+    },*/
     showSortSelector(){
       this.$refs.sortSelector.dialog = true
     },
@@ -353,6 +365,9 @@ export default {
     },
     showAddMount(){
       this.$refs.addMount.show()
+    },
+    showUpload(){
+      this.$refs.upload.show()
     },
     selectAll(){
       for (const file of this.fileList) {

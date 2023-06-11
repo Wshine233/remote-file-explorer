@@ -64,5 +64,7 @@ export default {
 </script>
 
 <style scoped>
-
+  #player{
+    color: black;
+  }
 </style>

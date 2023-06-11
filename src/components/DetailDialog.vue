@@ -12,7 +12,8 @@
               <template #title>
                 <div style="padding-left: 0; min-width: 200px">
                   <v-list-item-subtitle>{{info.key}}</v-list-item-subtitle>
-                  <v-list-item-title :class="{'clickable': info.click !== undefined}" @click="info.click !== undefined ? info.click() : ''">{{info.value}}</v-list-item-title>
+                  <v-list-item-title :class="{'clickable': info.click !== undefined}" @click="info.click !== undefined ? info.click() : ''"
+                                     style="overflow: unset; white-space: pre-wrap">{{info.value}}</v-list-item-title>
                 </div>
               </template>
             </v-list-item>

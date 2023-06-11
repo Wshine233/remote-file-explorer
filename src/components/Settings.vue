@@ -164,6 +164,10 @@ export default {
         }else{
           if(step === 'mount'){
             this.$refs.mount.show()
+          }else if(step === 'user') {
+            this.$refs.user.show()
+          }else if(step === 'perm') {
+            this.$refs.perm.show()
           }
         }
         this.wait = false

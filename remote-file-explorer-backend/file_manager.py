@@ -475,6 +475,8 @@ def generate_default_permission(path):
         result['rules'] += parent_perm['rules']
         break
 
+    format_perm_info(result)
+
     return result
 
 
@@ -506,8 +508,39 @@ def validate_perm_info(perm):
             return False
         if 'target' not in rule or not isinstance(rule['target'], str):
             return False
-        if 'permission' not in rule or not isinstance(rule['permission'], str):
+        if 'permission' not in rule or not isinstance(rule['permission'], str) or not pm.validate_permission(rule['permission']):
             return False
+    return True
+
+
+def format_perm_info(perm):
+    perm['file'] = str(Path(perm['file']).resolve())
+    perm['visibleGroup'] += cfg.super_group
+    perm['visibleGroup'] = list(set(perm['visibleGroup']))
+    perm['visibleUser'] = list(set(perm['visibleUser']))
+    perm['invisibleUser'] = list(set(perm['invisibleUser']))
+
+    for group in perm['visibleGroup'][:]:
+        if pm.get_group(group) is None:
+            perm['visibleGroup'].remove(group)
+    for user in perm['visibleUser'][:]:
+        if um.get_user_by_id(user) is None:
+            perm['visibleUser'].remove(user)
+    for user in perm['invisibleUser'][:]:
+        if um.get_user_by_id(user) is None:
+            perm['invisibleUser'].remove(user)
+
+
+def set_perm_info(perm):
+    if not validate_perm_info(perm):
+        return False
+    real_path = Path(perm['file']).resolve()
+    if not real_path.exists():
+        return False
+    
+    format_perm_info(perm)
+    perms[real_path] = perm
+    save_data()
     return True
 
 
@@ -926,6 +959,15 @@ def find_file(user_id, keyword, filter: dict):
         result = sh.filter_created_time(result, filter['time_created'][0], filter['time_created'][1])
     
     return result
+
+
+def file_exist(path):
+    path = Path(path)
+    real_path = get_file_real_path(path)
+    if real_path is None:
+        return False
+    
+    return real_path.exists()
 
 
 

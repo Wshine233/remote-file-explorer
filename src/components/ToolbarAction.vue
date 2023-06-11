@@ -27,19 +27,19 @@
       <span>More</span>
       <v-menu activator="parent" z-index="10087">
         <v-list>
-          <v-list-item title="Download" value="download" density="comfortable" @click="download">
+          <v-list-item v-if="selectList.length > 0" title="Download" value="download" density="comfortable" @click="download">
             <template v-slot:prepend>
               <v-icon style="margin-inline-end: 10px" icon="mdi-download"
                       size="26"></v-icon>
             </template>
           </v-list-item>
-          <v-list-item title="Move" value="move" density="comfortable">
+          <v-list-item title="Move" value="move" density="comfortable" :disabled="!canMove">
             <template v-slot:prepend>
               <v-icon style="margin-inline-end: 12px" icon="mdi-file-move"
                       size="24"></v-icon>
             </template>
           </v-list-item>
-          <v-list-item title="Set Permission" value="perm" density="comfortable" color="important">
+          <v-list-item v-if="superUser" title="Set Permission" value="perm" density="comfortable" color="important" @click="showPermSet" :disabled="!canSetPerm">
             <template v-slot:prepend>
               <v-icon style="margin-inline-end: 10px" icon="mdi-playlist-plus"
                       size="26" color="important"></v-icon>
@@ -62,7 +62,7 @@
 
   <ShareDrawer ref="share" />
 
-  <v-dialog v-model="deleteConfirm" persistent>
+  <v-dialog v-model="deleteConfirm">
     <v-card>
       <v-card-title>Delete</v-card-title>
       <v-card-text>Are you sure to delete selected files?</v-card-text>
@@ -75,6 +75,7 @@
   </v-dialog>
 
   <RenameFileDialog ref="rename" @confirm="renamed"/>
+  <SetFilePermDialog ref="setPerm" @confirm="permSet"/>
 
   <v-snackbar v-model="popup" timeout="2000" color="error">{{errMsg}}</v-snackbar>
 </template>
@@ -85,12 +86,13 @@ import {systemState} from "@/system";
 import ShareDrawer from "@/components/ShareDrawer";
 import {post} from "@/utils";
 import RenameFileDialog from "@/components/RenameFileDialog";
+import SetFilePermDialog from "@/components/SetFilePermDialog";
 
 export default {
   name: "ToolbarAction",
-  components: {RenameFileDialog, ShareDrawer},
-  props: ['selectList', 'base'],
-  emits: ['selectAll', 'selectInvert', 'delete', 'rename'],
+  components: {SetFilePermDialog, RenameFileDialog, ShareDrawer},
+  props: ['selectList', 'base', 'superUser'],
+  emits: ['selectAll', 'selectInvert', 'delete', 'rename', 'permSet'],
   data() {
     return {
       permission: '-----',
@@ -126,6 +128,9 @@ export default {
     },
     canDownload() {
       return this.permission[1] === 'd'
+    },
+    canSetPerm(){
+      return this.superUser && this.selectList.length === 1
     }
   },
   methods: {
@@ -168,8 +173,18 @@ export default {
     showRename(){
       this.$refs.rename.show(this.selectList[0])
     },
+    showPermSet(){
+      this.$refs.setPerm.show(this.selectList[0])
+    },
     renamed(){
       this.$emit('rename')
+    },
+    permSet(){
+      if(this.selectList.length !== 1){
+        window.alert("暂不支持同时编辑多个文件的权限")
+        return
+      }
+      this.$emit('permSet')
     },
     download(){
       if(this.selectList.length !== 1){

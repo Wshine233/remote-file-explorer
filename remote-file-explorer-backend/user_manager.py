@@ -3,14 +3,15 @@ import random
 import crypto
 import config as cfg
 import data_serialize_helper as dsh
+import permission_manager as pm
 
 
 users = [
     {
         'name': 'Administrator',
         'id': 'admin',
-        'passwordHash': 'admin',
-        'permissionGroup': 'admin',
+        'passwordHash': '96cae35ce8a9b0244178bf28e4966c2ce1b8385723a96a6b838858cdd6ca0a1e',  # 123123
+        'permissionGroup': 'super',
         'permission': "*****",
         'joinTime': 0
     }
@@ -101,6 +102,9 @@ def update_user(user_id, keys: list, values: list):
     for i in range(len(keys)):
         if keys[i] == 'passwordHash':
             continue
+        if keys[i] == 'permission':
+            if not pm.validate_permission(values[i]):
+                values[i] = user.get('permission', '*****')
         user[keys[i]] = values[i]
     
     save_data()
@@ -126,6 +130,9 @@ def get_user_info(user_id, keys: list):
     result = {}
     for key in keys:
         if key not in user or key == 'passwordHash':
+            continue
+        if key == 'permissionGroup' and pm.get_group(user[key]) is None:
+            result[key] = pm.get_default_group()
             continue
         result[key] = user[key]
     return result
@@ -156,8 +163,6 @@ def clear_expired_session():
 
 
 def get_session(session_id):
-    if random.random() < 0.3:
-        clear_expired_session()
     for session in sessions:
         if session['id'] == session_id:
             return session
@@ -165,6 +170,7 @@ def get_session(session_id):
 
 
 def create_session(user_id):
+    clear_expired_session()
     session_id = crypto.uuid_v4()
     sessions.append({
         'id': session_id,
@@ -208,6 +214,13 @@ def update_session(session_id):
 
 def session_login(session_id):
     return update_session(session_id)
+
+
+def list_users(keys):
+    result = []
+    for user in users:
+        result.append(get_user_info(user['id'], keys))
+    return result
 
 
 

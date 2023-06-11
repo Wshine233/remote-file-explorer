@@ -73,6 +73,10 @@ def get_user_permission(user_id):
 def add_group(id, permission):
     if get_group_permission(id) is not None:
         return False
+    
+    if not validate_permission(permission, allow_inherit=False):
+        return False
+    
     permission_groups.append({
         'id': id,
         'permission': permission
@@ -94,6 +98,10 @@ def update_group(id, permission):
     group = get_group(id)
     if group is None:
         return False
+    
+    if not validate_permission(permission, allow_inherit=False):
+        return False
+
     group['permission'] = permission
     save_data()
     return True
@@ -110,5 +118,24 @@ def check_permission(permission, check):
     return check in permission
 
 
+def validate_permission(perm, allow_inherit=True):
+    if perm is None:
+        return False
+    if len(perm) != 5:
+        return False
+    if perm[0] not in ('a*-' if allow_inherit else 'a-'):
+        return False
+    if perm[1] not in ('d*-' if allow_inherit else 'd-'):
+        return False
+    if perm[2] not in ('x*-' if allow_inherit else 'x-'):
+        return False
+    if perm[3] not in ('m*-' if allow_inherit else 'm-'):
+        return False
+    if perm[4] not in ('s*-' if allow_inherit else 's-'):
+        return False
+    return True
+
 
 load_data()
+if get_group(get_default_group()) is None:
+    add_group(get_default_group(), '-----')

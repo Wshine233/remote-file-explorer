@@ -75,6 +75,7 @@ export default {
         result.push({
           name: file.name,
           path: file.path,
+          type: file.type,
           time: file.time_modified,
           timeStr: getDateStr(file.time_modified),
           size: file.size,
@@ -105,6 +106,11 @@ export default {
       this.findFile()
     },
     clickItem(item){
+      if(item.type === 0){
+        this.$emit('path-click', item.path)
+        this.dialog = false
+        return
+      }
       this.$emit('preview', item)
     },
     clickInfo(file){
@@ -135,6 +141,7 @@ export default {
         filter: this.filter,
         limit: 500, //目前无作用，意义是限制搜索结果数量，但未对接用于解决不显示所有结果的问题
       }).then(res => {
+        console.log('search result', res.data)
         let data = res.data
         if(data.success){
           this.fileList = data.data

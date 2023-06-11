@@ -2,7 +2,7 @@
 <v-dialog v-model="dialog">
   <v-card>
     <v-card-title>{{title}}</v-card-title>
-    <v-card-text>{{content}}</v-card-text>
+    <v-card-text style="white-space: pre-wrap">{{content}}</v-card-text>
     <v-card-actions v-if="warn">
       <v-spacer></v-spacer>
       <v-btn color="info" @click="confirm(true)">

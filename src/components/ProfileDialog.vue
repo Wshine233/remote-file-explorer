@@ -13,6 +13,7 @@
                 <v-radio v-for="it in item.options" :label="it" :value="it"></v-radio>
               </v-radio-group>
               <v-textarea v-else-if="item.textarea === true" :label="item.label" :hint="item.hint" :readonly="item.readonly" :disabled="loading" v-model="item.value"></v-textarea>
+              <v-select v-else-if="item.select === true" :label="item.label"  :hint="item.hint" :readonly="item.readonly" :disabled="loading" v-model="item.value" :items="item.items"></v-select>
               <v-text-field v-else :label="item.label" :hint="item.hint" v-model="item.value" :readonly="item.readonly" :disabled="loading"></v-text-field>
             </template>
           </v-list-item>
@@ -30,6 +31,8 @@
       </v-card-actions>
     </v-card>
   </v-dialog>
+
+  <v-snackbar v-model="popup" color="error" timeout="2000">{{popupMsg}}</v-snackbar>
 </template>
 
 <script>
@@ -45,10 +48,20 @@ export default {
       profileData: {},
       dialog: false,
       loading: false,
-      saving: false
+      saving: false,
+
+      custom: true,
+      saveMethod: null,
+
+      popup: false,
+      popupMsg: ""
     }
   },
   methods:{
+    popMsg(msg){
+      this.popupMsg = msg
+      this.popup = true
+    },
     show(data){
       this.profile = [
         {
@@ -84,20 +97,39 @@ export default {
           readonly: true
         }
       ]
+      this.custom = false
+      this.saveMethod = null
       this.dialog = true
+    },
+    showCustom(data, saveMethod){
+      this.profile = data
+      this.dialog = true
+      this.custom = true
+      this.saveMethod = saveMethod
     },
     save(){
       this.loading = true
+      if(this.custom){
+        this.saveMethod(this.profile).then(res => {
+          this.loading = false
+          this.$emit('update')
+          this.dialog = false
+        }).catch(err => {
+          this.loading = false
+          this.popMsg(err.message)
+        })
+        return
+      }
+
       let keys = ['name', 'email', 'gender', 'description']
       let values = [this.profile[0].value, this.profile[1].value, this.profile[2].value, this.profile[3].value]
       setUserProfile(keys, values).then(res => {
         this.loading = false
         this.$emit('update')
+        this.dialog = false
       }).catch(err => {
         this.loading = false
-        window.alert(err.message)
-      }).finally(() => {
-        this.dialog = false
+        this.popMsg(err.message)
       })
     }
   }

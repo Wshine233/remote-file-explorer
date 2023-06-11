@@ -24,7 +24,7 @@
           </v-card-title>
           <v-card-text>
             <v-list>
-              <v-list-item v-for="item in mountList" :value="item.root" @click="edit(item)" rounded>
+              <v-list-item v-for="item in mountList" :value="item.root" rounded>
                 <v-list-item-title class="ellipse-rtl">{{ item.root }}</v-list-item-title>
                 <v-list-item-subtitle class="ellipse-rtl">{{ item.target }}</v-list-item-subtitle>
                 <template #append>
@@ -195,9 +195,6 @@ export default {
             })
           }
         })
-    },
-    edit(mount) {
-      window.alert('edit')
     },
     showConfirm(title = 'Warning', content = 'Are you sure to remove this item?', warn = true, callback = null) {
       this.$refs.confirm.show(title, content, warn, callback)

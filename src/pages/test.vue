@@ -48,7 +48,7 @@ export default {
     responseLogin(response) {
       if (response.success) {
         // this.showUsername()
-        this.$refs.list.getFileList(this.parsePath())
+        this.$refs.list.changePath(this.parsePath())
         this.loggedIn = true;
       } else {
         systemState.currentSession = undefined;
