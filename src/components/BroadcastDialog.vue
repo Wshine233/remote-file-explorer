@@ -44,6 +44,9 @@ export default {
   methods: {
     send() {
       this.loading = true
+      setTimeout(() => {
+        this.loading = false
+      }, 1000)
     }
   }
 }
