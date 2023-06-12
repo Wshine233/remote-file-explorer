@@ -11,7 +11,7 @@
       <span>Rename</span>
     </v-btn>
 
-    <v-btn variant="text" :stacked="true" size="small" density="comfortable" :disabled="!canCopy">
+    <v-btn variant="text" :stacked="true" size="small" density="comfortable" :disabled="!canCopy" @click="addClipboard('copy')">
       <v-icon>mdi-content-copy</v-icon>
       <span>Copy</span>
     </v-btn>
@@ -33,7 +33,7 @@
                       size="26"></v-icon>
             </template>
           </v-list-item>
-          <v-list-item title="Move" value="move" density="comfortable" :disabled="!canMove">
+          <v-list-item title="Move" value="move" density="comfortable" :disabled="!canMove" @click="addClipboard('move')">
             <template v-slot:prepend>
               <v-icon style="margin-inline-end: 12px" icon="mdi-file-move"
                       size="24"></v-icon>
@@ -82,9 +82,9 @@
 
 <script>
 import axios from "axios";
-import {systemState} from "@/system";
+import {clipBoard, syncToLocalStorage, systemState} from "@/system";
 import ShareDrawer from "@/components/ShareDrawer";
-import {post} from "@/utils";
+import {addToClipboard, post} from "@/utils";
 import RenameFileDialog from "@/components/RenameFileDialog";
 import SetFilePermDialog from "@/components/SetFilePermDialog";
 
@@ -92,7 +92,7 @@ export default {
   name: "ToolbarAction",
   components: {SetFilePermDialog, RenameFileDialog, ShareDrawer},
   props: ['selectList', 'base', 'superUser'],
-  emits: ['selectAll', 'selectInvert', 'delete', 'rename', 'permSet'],
+  emits: ['selectAll', 'selectInvert', 'delete', 'rename', 'permSet', 'copy-move'],
   data() {
     return {
       permission: '-----',
@@ -214,6 +214,7 @@ export default {
       let paths = []
       for(let file of this.selectList){
         paths.push(file.path)
+        delete clipBoard[file.path]
       }
 
       post('/file/delete', {
@@ -227,6 +228,13 @@ export default {
         this.deleteLoading = false
         this.popupMsg(err.message)
       })
+    },
+    addClipboard(mode){
+      for (let file of this.selectList) {
+        addToClipboard(file.path, file.type, mode)
+      }
+      syncToLocalStorage()
+      this.$emit('copy-move')
     }
   },
   watch: {

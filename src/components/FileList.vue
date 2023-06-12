@@ -33,13 +33,13 @@
                       size="26"></v-icon>
             </template>
           </v-list-item>
-          <v-list-item title="Add Mount" value="move" density="comfortable" @click="showAddMount">
+          <v-list-item v-if="superUser" title="Add Mount" value="move" density="comfortable" @click="showAddMount">
             <template v-slot:prepend>
               <v-icon style="margin-inline-end: 10px" icon="mdi-plus-box-outline"
                       size="26"></v-icon>
             </template>
           </v-list-item>
-          <v-list-item title="Settings" value="playlist" density="comfortable" color="important" @click="showSettings">
+          <v-list-item title="Settings" value="settings" density="comfortable" color="important" @click="showSettings">
             <template v-slot:prepend>
               <v-icon style="margin-inline-end: 10px" icon="mdi-cog"
                       size="26"></v-icon>
@@ -87,7 +87,7 @@
     <v-slide-y-reverse-transition>
       <ToolbarAction v-if="selectMode" :select-list="selectList" :base="path" ref="actions" :super-user="superUser"
                      @selectAll="selectAll" @selectInvert="selectInvert"
-                     @delete="changePath(path)" @rename="changePath(path)" @permSet="changePath(path)"/>
+                     @delete="changePath(path)" @rename="changePath(path)" @permSet="changePath(path)" @copy-move="updateCopyMove"/>
     </v-slide-y-reverse-transition>
   </div>
 
@@ -99,7 +99,7 @@
   <AddMountDialog ref="addMount" @confirm="changePath(path)" :path="path"/>
   <UploadFileDialog ref="upload" @confirm="changePath(path)" :root="path"/>
 
-  <ClipBoard />
+  <ClipBoard ref="clipboard" :path="path" :show="!selectMode" @paste="changePath(path)"/>
 
   <v-snackbar v-model="popup" color="error" timeout="2000">
     {{errMsg}}
@@ -176,7 +176,6 @@ export default {
       ],
       selectMode: false,
       selectList: [],
-      selectCount: 0,
       path: '/',
       loading: true,
       dialog: false,
@@ -215,13 +214,21 @@ export default {
       }
 
       return list
+    },
+    selectCount(){
+      return this.selectList.length
     }
   },
   methods: {
-    changePath(path){
+    updateCopyMove(){
+      this.$refs.clipboard.updateList()
       this.setSelectMode(false)
-      this.getFileList(path)
+    },
+    changePath(path, callback){
+      this.setSelectMode(false)
+      this.getFileList(path, callback)
       this.checkSuper()
+      this.updateCopyMove()
     },
     checkSuper(){
       checkSuperUser().then(res => {
@@ -305,12 +312,16 @@ export default {
     },
     setSelectMode(enable = true){
       this.selectMode = enable
+
+      if(!enable){
+        this.cancelSelect()
+      }
     },
     updateSelect(file) {
       file.selected = !file.selected
       let selectList = this.getSelectList()
       this.selectList = selectList
-      this.selectCount = selectList.length
+      // this.selectCount = selectList.length
     },
     getSelectList(){
       let result = []
@@ -327,11 +338,23 @@ export default {
         file.selected = false
       }
     },
+    selectPath(path){
+      this.setSelectMode()
+      for (const file of this.fileList) {
+        if(file.path === path){
+          this.updateSelect(file)
+        }
+      }
+    },
     clickInfo(file){
       this.showDetail(file)
     },
-    clickPath(path){
-      this.changePath(path)
+    clickPath(parent, path){
+      this.changePath(parent, () => {
+        if(path){
+          this.selectPath(path)
+        }
+      })
     },
     showErr(msg){
       this.errMsg = msg
@@ -374,16 +397,16 @@ export default {
         file.selected = true
       }
       this.selectList = this.getSelectList()
-      this.selectCount = this.selectList.length
+      // this.selectCount = this.selectList.length
     },
     selectInvert(){
       for (const file of this.fileList) {
         file.selected = !file.selected
       }
       this.selectList = this.getSelectList()
-      this.selectCount = this.selectList.length
+      // this.selectCount = this.selectList.length
     },
-    getFileList(path) {
+    getFileList(path, callback) {
       this.loading = true
       console.log(`正在获取${path}下的文件列表`)
       axios.defaults.baseURL = systemState.globalSettings.backendUrl
@@ -419,8 +442,15 @@ export default {
           this.fileList = list
           this.updatePathBreadcrumb()
           this.loading = false
+
+          if(callback){
+            callback()
+          }
         } else {
           window.alert(res.message)
+          if(res.message.includes("login")){
+            window.location.href = '/login.html'
+          }
         }
       }).catch(err => {
         console.log(err)

@@ -60,7 +60,7 @@
                 <v-list-item title="Manage Mounts" subtitle="Add, delete, edit mounts in current mount list." value="mount" @click="showWindow('mount')"></v-list-item>
                 <v-list-item title="Manage Users" subtitle="Edit user permissions, or remove users." value="user" @click="showWindow('user')"></v-list-item>
                 <v-list-item title="Manage Permissions" subtitle="Edit default permissions, or configure file rules." value="perm" @click="showWindow('perm')"></v-list-item>
-                <v-list-item title="Broadcast Message" subtitle="Broadcast Message to all users." value="broadcast" @click="showMessage"></v-list-item>
+                <v-list-item v-if="labMode" title="Broadcast Message" subtitle="Broadcast Message to all users." value="broadcast" @click="showMessage"></v-list-item>
               </v-list>
             </v-slide-y-transition>
           </div>
@@ -85,7 +85,7 @@
 
 
 <script>
-import {systemState} from "@/system";
+import {lab, systemState} from "@/system";
 import MountWindow from "@/components/MountWindow";
 import UserWindow from "@/components/UserWindow";
 import PermWindow from "@/components/PermWindow";
@@ -118,7 +118,9 @@ export default {
     }
   },
   computed: {
-
+    labMode(){
+      return lab
+    }
   },
   methods:{
     popMsg(msg, success = true){

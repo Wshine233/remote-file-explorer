@@ -2,10 +2,27 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
     <title>Welcome</title>
+    <style>
+        .center-screen{
+            margin: auto;
+            width: 90vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-width: 300px;
+
+            padding: 0 20px;
+        }
+    </style>
+    <script src="index.js" type="module"></script>
 </head>
 <body>
-    <a href="test.html"> Redirect to Test Page </a>
+    <div id="panel" class="center-screen"></div>
+<!--    <a href="test.html"> Redirect to Test Page </a>
     <a href="share.html"> Redirect to Share Page </a>
     <div id="location"></div>
 
@@ -14,6 +31,6 @@
         if(window.location.pathname === '/test'){
             window.location.href = 'test.html'
         }
-    </script>
+    </script>-->
 </body>
 </html>

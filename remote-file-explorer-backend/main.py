@@ -260,7 +260,7 @@ def update_password():
         else:
             return rh.pack_response(False, 'Session expired. Please login again.')
         
-        result = um.update_password(user, old_password, new_password)
+        result = um.update_password(user, old_password, new_password, session)
         if result:
             return rh.pack_response(True, 'Update password success.')
         else:
@@ -577,14 +577,40 @@ def rename():
 
 
 
-@app.route('/file/copy', methods=['POST'])
-def copy():
-    pass
+@app.route('/file/copy-move', methods=['POST'])
+def copy_move():
+    try:
+        data = request.get_json()
+        session = data.get('sessionId')
+        files = data.get('files')
+        new_parent = data.get('newParent')
+        if session is None or files is None or new_parent is None:
+            return rh.pack_response(False, 'Request format error.')
+        if not isinstance(files, list) or len(files) == 0 or not isinstance(new_parent, str):
+            return rh.pack_response(False, 'Request format error.')
+        
+        user = um.verify_session(session)
+        if user:
+            user = um.get_user_id(session)
+            if user is None:
+                return rh.pack_response(False, 'Unknown error. User not found.')
+        else:
+            return rh.pack_response(False, 'Session expired. Please login again.')
+        
+        result = fm.copy_move_files(files, new_parent, user)
+        # 获得成功和失败的任务个数
+        success = 0
+        failed = 0
+        for item in result:
+            if item['success']:
+                success += 1
+            else:
+                failed += 1
 
+        return rh.pack_response(True, f'Result of tasks, got {success} succeed and {failed} faild', result)
+    except Exception as e:
+        return rh.pack_response(False, 'Request error.', e)
 
-@app.route('/file/move', methods=['POST'])
-def move():
-    pass
 
 
 @app.route('/file/share', methods=['POST'])
@@ -822,7 +848,7 @@ def add_mount():
             return rh.pack_response(False, 'File not found.')
         
         result = fm.add_mount(real_path, mount_path)
-        if result is None:
+        if not result:
             return rh.pack_response(False, 'Mount failed. Try another mount root.')
         return rh.pack_response(True, 'Success.')
     except Exception as e:

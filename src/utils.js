@@ -1,6 +1,7 @@
 import axios from "axios";
-import {systemState} from "@/system";
+import {systemState, clipBoard, syncToLocalStorage} from "@/system";
 import {hashPassword, requestGetUserInfo, requestUpdateUserInfo, requestUpdateUserPassword} from "@/user-manager";
+
 
 export function getTimeStr(time){
   console.log(`time: ${time}`)
@@ -162,7 +163,7 @@ export function getFileExtType(ext, type = 1) {
     return 'audio'
   }
 
-  if(['txt', 'cfg', 'log', 'json', 'md'].includes(ext)){
+  if(['txt', 'cfg', 'log', 'json', 'md', 'lrc', 'ass'].includes(ext)){
     return 'text'
   }
 
@@ -352,4 +353,132 @@ export function updatePassword(oldPassword, newPassword){
       }
     })
   })
+}
+
+
+export function isParentPath(pathParent, pathChild){
+  if(pathParent === pathChild){
+    return true
+  }
+  if(pathParent[pathParent.length - 1] !== '/'){
+    //保证不出现以下情况的误判：'/a/bc'.startsWith('/a/b')
+    pathParent += '/'
+  }
+  return pathChild.startsWith(pathParent)
+}
+
+
+//转接因复制后路径改变的文件路径
+export function getNewPath(oldPath, oldParent, newParent){
+  // /a/b/c/d   /a/b -> /aa/b   /a/b/c/d -> /aa/b/c/d
+  if(oldPath === oldParent){
+    let fileName = getFileName(oldParent)
+    if(newParent[newParent.length - 1] !== '/'){
+      newParent += '/'
+    }
+    return newParent + fileName
+  }
+  let fileName = getFileName(oldParent)
+  if(newParent[newParent.length - 1] !== '/'){
+    newParent += '/'
+  }
+  newParent += fileName + '/'
+  let newPath = newParent + oldPath.substring(oldParent.length)
+  return newPath
+}
+
+
+export function updateClipboard(result, newParent){
+  let validResult = []
+  for (const item of result) {
+    //先把所有失败了且要删除的项目从剪贴板删除
+    if(!item.success && item.cancel){
+      delete clipBoard[item.path]
+    }else{
+      validResult.push(item)
+    }
+  }
+
+  //将结果按路径深度从深到浅排序
+  validResult.sort((a, b) => {
+    return b.path.split('/').length - a.path.split('/').length
+  })
+
+  //将剪贴板中的项目路径更新
+  for (const item of validResult) {
+    if(item.success){
+      //为什么复制模式也要更新路径？考虑以下情况：/a/b复制到/d，/a/b/c复制到/d，/a移动到/d，如果第一个和第三个成功了，则/a/b/c的位置依然发生了改变
+      //先delete掉自己，防止被重复判断
+      if(item.cancel){
+        delete clipBoard[item.path]
+      }
+      for (const path of Object.keys(clipBoard)){
+        if(isParentPath(item.path, path)){
+          let newPath = getNewPath(path, item.path, newParent)
+          clipBoard[newPath] = clipBoard[path]
+          delete clipBoard[path]
+        }
+      }
+    }
+  }
+
+  syncToLocalStorage()
+}
+
+
+export function joinPath(parent, child){
+  if(parent[parent.length - 1] === '/'){
+    return parent + child
+  }else{
+    return parent + '/' + child
+  }
+}
+
+
+export function requestPasteItem(pathFrom, parentTo){
+  //pathFrom must be a list
+
+  return new Promise((resolve, reject) => {
+    let files = []
+    for (const path of pathFrom) {
+      if(clipBoard[path] === undefined){
+        reject({
+          success: false,
+          message: 'Item not found.'
+        })
+        return
+      }
+      files.push({
+        path: path,
+        mode: clipBoard[path].mode
+      })
+    }
+
+    post('/file/copy-move', {
+      sessionId: systemState.currentSession,
+      files: files,
+      newParent: parentTo
+    }).then(res => {
+      //获取结果列表
+      let result = res.data
+      updateClipboard(result, parentTo)
+      resolve(result)
+    }).catch(err => {
+      reject(err)
+    })
+  })
+}
+
+
+export function addToClipboard(path, type, mode){
+  clipBoard[path] = {
+    type: type,
+    mode: mode,
+    time: Date.now()
+  }
+}
+
+
+export function removeFromClipboard(path){
+  delete clipBoard[path]
 }

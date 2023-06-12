@@ -47,7 +47,7 @@ export default {
     touchStart(file) {
       this.holdTimeout = setTimeout(() => {
         this.$emit('holdItem', file)
-      }, 700)
+      }, 500)
     },
     touchEnd() {
       clearTimeout(this.holdTimeout)

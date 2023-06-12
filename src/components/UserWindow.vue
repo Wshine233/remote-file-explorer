@@ -30,7 +30,7 @@
                     #{{group}}
                   </v-list-subheader>
                   <v-spacer></v-spacer>
-                  <v-btn color="info" density="comfortable" class="rect-btn" variant="text" style="margin: 0 16px;"
+                  <v-btn v-if="labMode" color="info" density="comfortable" class="rect-btn" variant="text" style="margin: 0 16px;"
                          icon @click="showBroadcast(getUsers(group), `Send to all users in group ${group}`)">
                     <v-icon>mdi-bullhorn-variant</v-icon>
                   </v-btn>
@@ -74,7 +74,7 @@
 <script>
 import BroadcastDialog from "@/components/BroadcastDialog";
 import {getTimeStr, listUsers, post, setUserProfile} from "@/utils";
-import {systemState} from "@/system";
+import {lab, systemState} from "@/system";
 import ProfileDialog from "@/components/ProfileDialog";
 import ConfirmDialog from "@/components/ConfirmDialog";
 export default {
@@ -220,6 +220,9 @@ export default {
       }
 
       return res
+    },
+    labMode(){
+      return lab
     }
   },
   methods: {

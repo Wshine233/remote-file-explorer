@@ -124,8 +124,8 @@ export default {
     holdItem(item){
 
     },
-    pathClick(path){
-      this.$emit('path-click', path)
+    pathClick(parent, path){
+      this.$emit('path-click', parent, path)
       this.dialog = false
     },
     findFile(){

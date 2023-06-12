@@ -733,44 +733,191 @@ def rename_file(path, new_name, user_id):
     return fh.rename_file(real_path, new_name)
 
 
-def move_file(path, new_path, user_id):
+def move_file(path, new_parent, user_id):
     path = Path(path)
     real_path = get_file_real_path(path)
     if real_path is None:
-        return False
+        return False, True, 'Cannot locate real path.'   # 无法定位到原文件，该任务已无作用，可以删除
     
     if not check_permission(path, user_id, 'm'):
-        return False
+        return False, True, 'No modify permission.'   # 无权修改原文件，该任务已无作用，可以删除
+    if not check_permission(new_parent, user_id, 'a'):
+        return False, False, 'No add permission.'   # 无权在新目录下创建文件，但可以换一个目录粘贴，该任务仍然有效，不可删除
+    if not check_permission(path, user_id, 'x'):
+        return False, True, 'No delete permission.'   # 无权删除原文件，该任务已无作用，可以删除
     
-    new_path = Path(new_path)
+    new_path = Path(new_parent) / path.name
     new_real_path = get_file_real_path(new_path, check_exists=False)
     if new_real_path is None:
-        return False
-    
-    if not check_permission(new_path.parent, user_id, 'a'):
-        return False
+        return False, False, 'Cannot locate to target real path.'  # 无法定位到新的目录，但可以换一个目录粘贴，该任务仍然有效，不可删除
     
     return fh.move_file(real_path, new_real_path)
 
 
-def copy_file(path, new_path, user_id):
+def check_move_file(path, new_parent, user_id):
     path = Path(path)
     real_path = get_file_real_path(path)
     if real_path is None:
-        return False
+        return False, True, 'Cannot locate real path.'   # 无法定位到原文件，该任务已无作用，可以删除
     
     if not check_permission(path, user_id, 'm'):
-        return False
+        return False, True, 'No modify permission.'   # 无权修改原文件，该任务已无作用，可以删除
+    if not check_permission(new_parent, user_id, 'a'):
+        return False, False, 'No add permission in target path.'  # 无权在新目录下创建文件，但可以换一个目录粘贴，该任务仍然有效，不可删除
+    if not check_permission(path, user_id, 'x'):
+        return False, True, 'No delete permission.'   # 无权删除原文件，该任务已无作用，可以删除
     
-    new_path = Path(new_path)
+    new_path = Path(new_parent) / path.name
     new_real_path = get_file_real_path(new_path, check_exists=False)
     if new_real_path is None:
-        return False
+        return False, False, 'Cannot locate to target real path.'  # 无法定位到新的目录，但可以换一个目录粘贴，该任务仍然有效，不可删除
     
-    if not check_permission(new_path.parent, user_id, 'a'):
-        return False
+    return fh.check_copy_move(real_path, new_real_path)
+
+
+def copy_file(path, new_parent, user_id):
+    path = Path(path)
+    real_path = get_file_real_path(path)
+    if real_path is None:
+        return False, True, 'Cannot locate real path.'   # 无法定位到原文件，该任务已无作用，可以删除
+    
+    if not check_permission(path, user_id, 'm'):
+        return False, True, 'No modify permission.'   # 无权修改原文件，该任务已无作用，可以删除
+    if not check_permission(new_parent, user_id, 'a'):
+        return False, False, 'No add permission in target path.'  # 无权在新目录下创建文件，但可以换一个目录粘贴，该任务仍然有效，不可删除
+    
+    new_path = Path(new_parent) / path.name
+    new_real_path = get_file_real_path(new_path, check_exists=False)
+    if new_real_path is None:
+        return False, False, 'Cannot locate to target real path.'  # 无法定位到新的目录，但可以换一个目录粘贴，该任务仍然有效，不可删除
     
     return fh.copy_file(real_path, new_real_path)
+
+
+def check_copy_file(path, new_parent, user_id):
+    path = Path(path)
+    real_path = get_file_real_path(path)
+    if real_path is None:
+        return False, True, 'Cannot locate real path.'   # 无法定位到原文件，该任务已无作用，可以删除
+    
+    if not check_permission(path, user_id, 'm'):
+        return False, True, 'No modify permission.'   # 无权修改原文件，该任务已无作用，可以删除
+    if not check_permission(new_parent, user_id, 'a'):
+        return False, False, 'No add permission in target path.'  # 无权在新目录下创建文件，但可以换一个目录粘贴，该任务仍然有效，不可删除
+    
+    new_path = Path(new_parent) / path.name
+    new_real_path = get_file_real_path(new_path, check_exists=False)
+    if new_real_path is None:
+        return False, False, 'Cannot locate to target real path.'  # 无法定位到新的目录，但可以换一个目录粘贴，该任务仍然有效，不可删除
+    
+    return fh.check_copy_move(real_path, new_real_path)
+
+
+def copy_move_files(files: list, new_parent, user_id):
+    """根据每条任务的类型判断是移动还是拷贝，最终返回每条任务的结果
+    返回结构：
+    [
+        {
+            'path': 'xxx',
+            'mode': 'copy'/'move',
+            'success': True/False,
+            'message': 'xxx',
+            'cancel': True/False
+        }
+    ]
+
+    path: 任务的原路径
+    mode: 任务的类型，拷贝或移动
+    success: 任务是否成功
+    message: 任务的结果描述
+    cancel: 任务是否已无作用，可删除。一些任务虽然失败，但可以保留，比如无权在目标目录下创建文件，但可以换一个目录粘贴。
+
+    参数中files结构:
+    [
+        {
+            'path': 'xxx',
+            'mode': 'copy'/'move'
+        }
+    ]
+
+    path: 任务的原路径
+    mode: 任务的类型，拷贝或移动
+    
+    预处理时，先过滤掉无效的任务，比如无法定位到原文件的任务，无权修改原文件的任务，无权在目标目录下创建文件的任务。
+    处理时，先将所有任务按照路径排序，越深的路径越靠前，这样可以保证先处理子目录再处理父目录。
+    """
+
+    new_parent = Path(new_parent)
+    results = []
+    tasks = []
+
+    for file in files:
+        if file['mode'] == 'move':
+            success, cancel, message = check_move_file(file['path'], new_parent, user_id)
+            if success:
+                tasks.append(file)
+            else:
+                results.append({
+                    'path': file['path'],
+                    'mode': 'move',
+                    'success': False,
+                    'message': message,
+                    'cancel': cancel
+                })
+        elif file['mode'] == 'copy':
+            success, cancel, message = check_copy_file(file['path'], new_parent, user_id)
+            if success:
+                tasks.append(file)
+            else:
+                results.append({
+                    'path': file['path'],
+                    'mode': 'copy',
+                    'success': False,
+                    'message': message,
+                    'cancel': cancel
+                })
+        else:
+            results.append({
+                'path': file['path'],
+                'mode': file['mode'],
+                'success': False,
+                'message': 'Unknown mode.',
+                'cancel': True
+            })
+
+    tasks.sort(key=lambda x: len(get_file_real_path(x['path']).parents), reverse=True)
+
+    for task in tasks:
+        if task['mode'] == 'move':
+            success, cancel, message = move_file(task['path'], new_parent, user_id)
+            results.append({
+                'path': task['path'],
+                'mode': 'move',
+                'success': success,
+                'message': message,
+                'cancel': cancel
+            })
+        elif task['mode'] == 'copy':
+            success, cancel, message = copy_file(task['path'], new_parent, user_id)
+            results.append({
+                'path': task['path'],
+                'mode': 'copy',
+                'success': success,
+                'message': message,
+                'cancel': cancel
+            })
+        else:
+            results.append({
+                'path': task['path'],
+                'mode': task['mode'],
+                'success': False,
+                'message': 'Unknown mode.',
+                'cancel': True
+            })
+
+    return results
+    
+
 
 
 def list_root_file(user_id):

@@ -71,8 +71,8 @@ export default {
         window.alert(err)
       })
     },
-    clickPath(path){
-      this.$emit('path-click', path)
+    clickPath(parent, path){
+      this.$emit('path-click', parent, path)
       this.dialog = false
     },
     setInfo() {
@@ -91,7 +91,7 @@ export default {
                 key: "Path",
                 value: parent,
                 click: () => {
-                  this.clickPath(parent)
+                  this.clickPath(parent, this.fileInfo.path)
                 }
               },
               {
@@ -127,7 +127,7 @@ export default {
               key: "Path",
               value: parent,
               click: () => {
-                this.clickPath(parent)
+                this.clickPath(parent, this.fileInfo.path)
               }
             },
             {

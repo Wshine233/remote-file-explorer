@@ -7,5 +7,12 @@
 </head>
 <body>
 <div id="app"></div>
+
+<script>
+    let node = document.getElementById('app')
+    node.addEventListener('contextmenu', function(e){
+        e.preventDefault();
+    });
+</script>
 </body>
 </html>

@@ -39,7 +39,7 @@ export default {
       nameRules: [
         v => !!v || 'Name is required',
         v => v.length <= 255 || 'Name must be less than 255 characters',
-        v => '/*\\?:"<>|'.indexOf(v) === -1 || 'Name cannot contain the following characters: \\/:*?"<>|'
+        v => !/[/*\\?:"<>|]/.test(v) || 'Name cannot contain the following characters: \\/:*?"<>|'
       ],
       keepExt: true,
       file: {},

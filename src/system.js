@@ -4,7 +4,7 @@ export const defaultState = {
   currentSession: undefined,
   globalSettings: {
     virtualMode: true, //是否开启虚拟模式（本地演示模式）
-    backendUrl: "https://localhost:8080", //后端服务器地址
+    backendUrl: "https://localhost:8512", //后端服务器地址
   }
 }
 
@@ -14,13 +14,16 @@ export let systemState = reactive(defaultState)
 export let clipBoard = reactive({
   '/Example Folder/Example File': {
     type: 1,
-    mode: 'copy'
+    mode: 'copy',
+    time: 1023
   },
   '/Example Folder/Example Folder 2': {
     type: 0,
-    mode: 'move'
+    mode: 'move',
+    time: 1024
   }
 })
+export let lab = true
 
 function initState() {
   if (localStorage.getItem("system-state") !== null) {
@@ -29,7 +32,7 @@ function initState() {
     localStorage.setItem("system-state", JSON.stringify(defaultState))
   }
   systemState.globalSettings.virtualMode = false
-  systemState.globalSettings.backendUrl = "http://192.168.0.135:8512"
+  // systemState.globalSettings.backendUrl = "http://192.168.0.135:8512"
 
   if (localStorage.getItem("clip-board") !== null) {
     clipBoard = JSON.parse(localStorage.getItem("clip-board"))

@@ -111,7 +111,7 @@ def update_user(user_id, keys: list, values: list):
     return True
 
 
-def update_password(user_id, old_password_hash, new_password_hash):
+def update_password(user_id, old_password_hash, new_password_hash, exception=[]):
     user = get_user_by_id(user_id)
     if user is None:
         return False
@@ -119,6 +119,7 @@ def update_password(user_id, old_password_hash, new_password_hash):
         return False
     user['passwordHash'] = new_password_hash
 
+    clear_user_session(user_id, exception=exception)
     save_data()
     return True
 
@@ -158,6 +159,13 @@ def logout(session_id):
 def clear_expired_session():
     for session in sessions[:]:
         if session['expired'] < crypto.time():
+            sessions.remove(session)
+    save_data()
+
+
+def clear_user_session(user_id, exception=[]):
+    for session in sessions[:]:
+        if session['user'] == user_id and session['id'] not in exception:
             sessions.remove(session)
     save_data()
 

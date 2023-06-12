@@ -108,25 +108,42 @@ def rename_file(path: Path, name: str):
 
 
 def move_file(path: Path, new_path: Path):
-    if not path.exists():
-        return False
-    if new_path.exists():
-        return False
-    if not new_path.parent.exists():
-        create_folder(new_path.parent)
-    shutil.move(str(path), str(new_path))
-    return True
+    try:
+        if not path.exists():
+            return False, True, 'File not found.'
+        if new_path.exists():
+            return False, False, 'Target path already have a file with the same name.'
+        if not new_path.parent.exists():
+            create_folder(new_path.parent)
+        shutil.move(str(path), str(new_path))
+        return True, True, 'Move successfully.'  # 移动成功，由于是移动，原文件已经不存在，可以删除
+    except Exception as e:
+        return False, False, str(e)   # 未知原因移动失败，可重试，不能删除
 
 
 def copy_file(path: Path, new_path: Path):
+    try:
+        if not path.exists():
+            return False, True, 'File not found.'  # 文件不存在，该任务已经没有作用，可以删除
+        if new_path.exists():
+            return False, False, 'Target path already have a file with the same name.'  # 目标目录下存在同名文件，可以重命名后再复制，所以不能删除
+        if not new_path.parent.exists():
+            create_folder(new_path.parent)
+        if path.is_dir():
+            shutil.copytree(str(path), str(new_path))
+        else:
+            shutil.copyfile(str(path), str(new_path))
+        return True, False, 'Copy successfully.'  # 复制成功，由于可以反复复制，所以不能删除
+    except Exception as e:
+        return False, False, str(e)  # 未知原因复制失败，可重试，不能删除
+
+
+def check_copy_move(path: Path, new_path: Path):
     if not path.exists():
-        return False
+        return False, True, 'File not found.'  # 文件不存在，该任务已经没有作用，可以删除
     if new_path.exists():
-        return False
-    if not new_path.parent.exists():
-        create_folder(new_path.parent)
-    shutil.copy(str(path), str(new_path))
-    return True
+        return False, False, 'Target path already have a file with the same name.'  # 目标目录下存在同名文件，可以重命名后再复制，所以不能删除
+    return True, False, 'Valid.'  # 任务有效，不能删除
 
 
 def same_path(path1: Path, path2: Path):

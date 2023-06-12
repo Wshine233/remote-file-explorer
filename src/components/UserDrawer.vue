@@ -16,9 +16,9 @@
 
       <v-list density="compact" nav>
         <v-list-item prepend-icon="mdi-view-dashboard" title="Profile" value="profile" @click="clickItem('profile')"></v-list-item>
-        <v-list-item v-if="false" prepend-icon="mdi-history" title="History" value="history" @click="clickItem('history')"></v-list-item>
-        <v-list-item v-if="false" prepend-icon="mdi-share" title="Sharing" value="sharing" @click="clickItem('sharing')"></v-list-item>
-        <v-list-item v-if="false" prepend-icon="mdi-bell-outline" title="Notification" value="notification" @click="clickItem('notification')">
+        <v-list-item v-if="labMode" prepend-icon="mdi-history" title="History" value="history" @click="clickItem('history')"></v-list-item>
+        <v-list-item v-if="labMode" prepend-icon="mdi-share" title="Sharing" value="sharing" @click="clickItem('sharing')"></v-list-item>
+        <v-list-item v-if="labMode" prepend-icon="mdi-bell-outline" title="Notification" value="notification" @click="clickItem('notification')">
           <template #append>
             <v-badge v-if="unread > 0" :color="unreadColor" :content="unread" inline></v-badge>
           </template>
@@ -53,7 +53,7 @@
 <script>
 import ProfileDialog from "@/components/ProfileDialog";
 import { useTheme } from 'vuetify'
-import {syncToLocalStorage, systemState} from "@/system";
+import {lab, syncToLocalStorage, systemState} from "@/system";
 import HistoryDialog from "@/components/HistoryDialog";
 import NotificationDialog from "@/components/NotificationDialog";
 import SharingDialog from "@/components/SharingDialog";
@@ -88,6 +88,9 @@ export default {
     }
   },
   computed: {
+    labMode(){
+      return lab
+    }
   },
   methods: {
     clickItem(item) {
@@ -144,7 +147,7 @@ export default {
     const theme = useTheme()
     this.darkMode = theme.global.current.value.dark
 
-    setInterval(this.syncNotification, 10000)
+    // setInterval(this.syncNotification, 10000)
   }
 }
 </script>
