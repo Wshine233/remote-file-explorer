@@ -30,8 +30,8 @@ sessions = [
 
 def load_data():
     global users, sessions
-    users = dsh.deserialize_users(None, cfg.user_data_path)
-    sessions = dsh.deserialize_sessions(None, cfg.session_data_path)
+    users = dsh.deserialize_users(None, cfg.user_data_path, users)
+    sessions = dsh.deserialize_sessions(None, cfg.session_data_path, sessions)
 
 
 def save_data():
