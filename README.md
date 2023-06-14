@@ -1,4 +1,5 @@
-# default
+# Remote File Explorer
+期末大作业项目，包含前后端的远程文件管理系统。
 
 ## Project setup
 
