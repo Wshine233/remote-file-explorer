@@ -21,7 +21,7 @@
     </v-card>
   </v-dialog>
 
-  <v-snackbar v-model="popup" timeout="2000" color="error">{{errMsg}}</v-snackbar>
+  <v-snackbar v-model="popup" timeout="1500" color="error">{{errMsg}}</v-snackbar>
 </template>
 
 <script>

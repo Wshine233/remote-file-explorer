@@ -646,6 +646,13 @@ def add_ignore(target):
     return False
 
 
+def add_ignore_by_path(path):
+    real_path = get_file_real_path(path)
+    if real_path is None:
+        return False
+    return add_ignore(real_path)        
+
+
 def remove_ignore(target):
     target = Path(target).resolve()
     if target in ignores:
@@ -1074,6 +1081,7 @@ def get_search_result_unit(file):
 
 def find_file_in_path(user_id, keyword, path, recursive=False):
     path = Path(path)
+    print(f"Finding file in path: {path}")
     
     files = list_file(user_id, path)
     result = []

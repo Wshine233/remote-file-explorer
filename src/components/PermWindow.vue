@@ -57,7 +57,7 @@ export default {
   data(){
     return {
       loading: false,
-      groups:[
+      groups:[],/*[
         {
           id: "admin",
           permission: "adxms"
@@ -74,7 +74,7 @@ export default {
           id: "guest",
           permission: "----s"
         },
-      ],
+      ],*/
 
       popup: false,
       popupMsg: "",

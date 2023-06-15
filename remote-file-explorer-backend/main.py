@@ -948,6 +948,37 @@ def add_ignore():
         return rh.pack_response(False, 'Request error.', e)
 
 
+@app.route('/ignore/adds', methods=['POST'])
+def add_ignores():
+    try:
+        data = request.get_json()
+        session = data.get('sessionId')
+        paths = data.get('paths') 
+        if session is None or paths is None:
+            return rh.pack_response(False, 'Request format error.')
+        
+        user = um.verify_session(session)
+        if user:
+            user = um.get_user_id(session)
+            if user is None:
+                return rh.pack_response(False, 'Unknown error. User not found.')
+        else:
+            return rh.pack_response(False, 'Session expired. Please login again.')
+
+        if um.get_user_info(user, ['permissionGroup'])['permissionGroup'] not in cfg.super_group:
+            return rh.pack_response(False, 'Permission denied.')
+        
+        result = []
+        for path in paths:
+            result.append({
+                'path': path,
+                'success': fm.add_ignore_by_path(path)
+            })
+        return rh.pack_response(True, 'Success.', result)
+    except Exception as e:
+        return rh.pack_response(False, 'Request error.', e)
+
+
 @app.route('/ignore/remove', methods=['POST'])
 def remove_ignore():
     try:

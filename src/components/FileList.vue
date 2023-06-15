@@ -87,7 +87,7 @@
     <v-slide-y-reverse-transition>
       <ToolbarAction v-if="selectMode" :select-list="selectList" :base="path" ref="actions" :super-user="superUser"
                      @selectAll="selectAll" @selectInvert="selectInvert"
-                     @delete="changePath(path)" @rename="changePath(path)" @permSet="changePath(path)" @copy-move="updateCopyMove"/>
+                     @delete="changePath(path)" @rename="changePath(path)" @permSet="changePath(path)" @copy-move="updateCopyMove" @ignore="changePath(path)"/>
     </v-slide-y-reverse-transition>
   </div>
 
@@ -143,7 +143,7 @@ export default {
     Settings, DetailDialog, SortSelectDialog, ViewSelectDialog, UserDrawer, FileListView, ToolbarAction},
   data() {
     return {
-      fileList: [
+      fileList: [], /*[
         {
           name: "Example Folder",
           type: 0,
@@ -158,7 +158,7 @@ export default {
           timeStr: "2021-01-01 00:00:00",
           selected: false
         }
-      ],
+      ],*/
       userInfo: {
         name: 'Wshine',
         group: 'admin'
@@ -168,10 +168,6 @@ export default {
         {
           name: 'root',
           path: '/'
-        },
-        {
-          name: 'Example Folder',
-          path: '/Example Folder'
         }
       ],
       selectMode: false,

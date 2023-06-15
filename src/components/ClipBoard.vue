@@ -37,7 +37,7 @@
   <v-dialog v-model="errDialog" persistent>
     <v-card>
       <v-card-title>Clipboard Error Log</v-card-title>
-      <v-card-text style="max-height: 70vh; overflow-y: auto; padding-top: 0; color: red">
+      <v-card-text style="max-height: 70vh; overflow-y: auto; padding-top: 0; color: red; white-space: pre-wrap">
         {{errLog}}
       </v-card-text>
       <v-card-actions>
@@ -112,7 +112,7 @@ export default {
       requestPasteItem(paths, this.path).then(result => {
         let failed = result.filter(item => !item.success)
         if(failed.length > 0){
-          this.errLog = failed.map(item => JSON.stringify(item)).join('\n')
+          this.errLog = this.formatLog(failed)  // failed.map(item => JSON.stringify(item)).join('\n')
           this.errDialog = true
         }
         this.updateList()
@@ -134,7 +134,7 @@ export default {
       requestPasteItem([item.path], this.path).then(result => {
         let failed = result.filter(item => !item.success)
         if(failed.length > 0){
-          this.errLog = failed.map(item => JSON.stringify(item)).join('\n')
+          this.errLog = this.formatLog(failed) //failed.map(item => JSON.stringify(item)).join('\n')
           this.errDialog = true
         }
         this.updateList()
@@ -148,6 +148,18 @@ export default {
     },
     toggleDrawer(){
       this.drawer = !this.drawer
+    },
+    formatLog(log){
+      let text = ""
+      console.log(log)
+      for (let failed of log.filter(item => !item.success)){
+        text += `File: ${failed.path}\n`
+        text += `Mode: ${failed.mode}\n`
+        text += `Message: ${failed.message}\n`
+        text += `Cancel: ${failed.cancel}\n`
+        text += `\n`
+      }
+      return text.substr(0, text.length - 1)
     }
   }
 }

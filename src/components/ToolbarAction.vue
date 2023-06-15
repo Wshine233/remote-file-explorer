@@ -45,6 +45,12 @@
                       size="26" color="important"></v-icon>
             </template>
           </v-list-item>
+          <v-list-item v-if="superUser" title="Add Ignore" value="perm" density="comfortable" color="important" @click="addIgnore" :disabled="!hasSelect">
+            <template v-slot:prepend>
+              <v-icon style="margin-inline-end: 10px" icon="mdi-eye-remove"
+                      size="26" color="important"></v-icon>
+            </template>
+          </v-list-item>
           <v-list-item title="Select All" value="select-all" density="comfortable" @click="selectAll">
             <template v-slot:prepend>
               <v-icon style="margin-inline-end: 10px" size="26" color="warning">mdi-select-all</v-icon>
@@ -92,7 +98,7 @@ export default {
   name: "ToolbarAction",
   components: {SetFilePermDialog, RenameFileDialog, ShareDrawer},
   props: ['selectList', 'base', 'superUser'],
-  emits: ['selectAll', 'selectInvert', 'delete', 'rename', 'permSet', 'copy-move'],
+  emits: ['selectAll', 'selectInvert', 'delete', 'rename', 'permSet', 'copy-move', 'ignore'],
   data() {
     return {
       permission: '-----',
@@ -104,6 +110,9 @@ export default {
     }
   },
   computed: {
+    hasSelect(){
+      return this.selectList.length > 0
+    },
     canShare() {
       return this.permission[4] === 's'
     },
@@ -235,6 +244,18 @@ export default {
       }
       syncToLocalStorage()
       this.$emit('copy-move')
+    },
+    addIgnore(){
+      let list = this.selectList.map(file => file.path)
+
+      post('/ignore/adds', {
+        sessionId: systemState.currentSession,
+        paths: list
+      }).then(res => {
+        this.$emit('ignore')
+      }).catch(err => {
+        this.popupMsg(err.message)
+      })
     }
   },
   watch: {

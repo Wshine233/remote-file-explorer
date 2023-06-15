@@ -20,6 +20,7 @@
 
     </v-card>
   </v-dialog>
+  <v-snackbar v-model="popup" :color="success ? 'success' : 'error'" timeout="1500">{{popupMsg}}</v-snackbar>
 </template>
 
 <script>
@@ -33,7 +34,11 @@ export default {
       msg: "",
       anonymous: false,
       loading: false,
-      important: false
+      important: false,
+
+      popup: false,
+      popupMsg: "",
+      success: true
     }
   },
   computed:{
@@ -42,10 +47,27 @@ export default {
     }
   },
   methods: {
+    popMsg(msg, success = false){
+      this.popupMsg = msg
+      this.popup = true
+      this.success = success
+    },
     send() {
+      if(this.msgTitle.length <= 0){
+        this.popMsg("Title cannot be empty!")
+        return
+      }
+      if(this.msg.length <= 0){
+        this.popMsg("Message cannot be empty!")
+        return
+      }
       this.loading = true
       setTimeout(() => {
         this.loading = false
+        this.dialog = false
+        this.popMsg("Message sent!", true)
+        this.msgTitle = ""
+        this.msg = ""
       }, 1000)
     }
   }

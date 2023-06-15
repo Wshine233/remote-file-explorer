@@ -86,7 +86,7 @@ export default {
       loading: false,
       sendTo: [],
       sendToMsg: "",
-      users:[
+      users:[], /*[
         {
           id: "wshine",
           name: "Wshine",
@@ -202,7 +202,7 @@ export default {
           name: "test account",
           permissionGroup: "user"
         }
-      ],
+      ],*/
       groups: ["admin", "user"],
 
       popup: false,

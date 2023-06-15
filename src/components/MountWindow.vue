@@ -93,7 +93,7 @@ export default {
     return {
       loadingMount: true,
       loadingIgnore: true,
-      mounts: [
+      mounts: [] /*[
         {
           target: 'D:/Example File/Example Executive File.exe',
           root: '/Example File.exe'
@@ -102,8 +102,8 @@ export default {
           target: 'D:/Example Folder',
           root: '/Example Folder'
         },
-      ],
-      ignores: ['D:/test ignore/ignore folder/ignore file.txt'],
+      ]*/,
+      ignores: [], //['D:/test ignore/ignore folder/ignore file.txt'],
 
       popup: false,
       popupText: '',

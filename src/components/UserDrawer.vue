@@ -48,6 +48,8 @@
   <NotificationDialog ref="notification" />
   <SharingDialog ref="sharing" />
   <Settings ref="settings"/>
+
+  <ConfirmDialog ref="confirm"/>
 </template>
 
 <script>
@@ -59,10 +61,11 @@ import NotificationDialog from "@/components/NotificationDialog";
 import SharingDialog from "@/components/SharingDialog";
 import {getUserProfile} from "@/utils";
 import Settings from "@/components/Settings";
+import ConfirmDialog from "@/components/ConfirmDialog";
 
 export default {
   name: "UserDrawer",
-  components: {Settings, SharingDialog, NotificationDialog, HistoryDialog, ProfileDialog},
+  components: {ConfirmDialog, Settings, SharingDialog, NotificationDialog, HistoryDialog, ProfileDialog},
   props: [],
   setup(){
     const theme = useTheme()
@@ -109,9 +112,12 @@ export default {
       }
     },
     logout(){
-      systemState.currentSession = undefined
-      syncToLocalStorage()
-      window.location.href = '/login.html'
+      this.$refs.confirm.show('Warning', 'Are you sure to logout?', false, res=>{
+        if(!res) return
+        systemState.currentSession = undefined
+        syncToLocalStorage()
+        window.location.href = '/login.html'
+      })
     },
     syncNotification(){
       //TODO: 同步通知阅读情况
@@ -123,7 +129,7 @@ export default {
 
 
       //TODO: 将未读通知数写到systemState里面
-      systemState.unread = 11
+      systemState.unread = 1
       systemState.unreadImportant = false
       syncToLocalStorage()
     },
@@ -147,7 +153,7 @@ export default {
     const theme = useTheme()
     this.darkMode = theme.global.current.value.dark
 
-    // setInterval(this.syncNotification, 10000)
+    setTimeout(this.syncNotification, 10000)
   }
 }
 </script>
