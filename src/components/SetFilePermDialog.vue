@@ -47,8 +47,8 @@
       </v-card-text>
       <v-card-actions>
         <v-spacer></v-spacer>
-        <v-btn text @click="dialog = false" :disabled="loading">Cancel</v-btn>
-        <v-btn color="info" text @click="confirmEdit" :loading="loading">Confirm</v-btn>
+        <v-btn @click="dialog = false" :disabled="loading">Cancel</v-btn>
+        <v-btn color="info" @click="confirmEdit" :loading="loading">Confirm</v-btn>
       </v-card-actions>
     </v-card>
   </v-dialog>

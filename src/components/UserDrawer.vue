@@ -105,6 +105,7 @@ export default {
         this.logout()
       }else if(item === 'notification'){
         this.$refs.notification.dialog = true
+        this.syncNotification(0)
       }else if(item === 'sharing'){
         this.$refs.sharing.dialog = true
       }else if(item === 'settings'){
@@ -119,19 +120,18 @@ export default {
         window.location.href = '/login.html'
       })
     },
-    syncNotification(){
+    syncNotification(sum = 1){
       //TODO: 同步通知阅读情况
+
+      //TODO: 将未读通知数写到systemState里面
+      systemState.unread = sum
+      systemState.unreadImportant = false
+      syncToLocalStorage()
 
       //TODO: 标注未读消息
       let cot = systemState.unread === undefined ? 0 : parseInt(systemState.unread)
       this.unread = cot
       this.unreadColor = systemState.unreadImportant ? 'important' : 'info';
-
-
-      //TODO: 将未读通知数写到systemState里面
-      systemState.unread = 1
-      systemState.unreadImportant = false
-      syncToLocalStorage()
     },
     getUserInfo(){
       getUserProfile().then((data)=>{

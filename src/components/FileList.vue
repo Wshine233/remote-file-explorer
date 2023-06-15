@@ -1,5 +1,5 @@
 <template id="body">
-  <UserDrawer ref="userDrawer" :user-info="userInfo"/>
+  <UserDrawer ref="userDrawer"/>
   <SortSelectDialog ref="sortSelector" @confirm="updateSortRule"/>
 <!--  <ViewSelectDialog ref="viewSelector" />-->
   <Settings ref="setting" />

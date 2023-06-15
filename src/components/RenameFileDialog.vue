@@ -14,8 +14,8 @@
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn text @click="dialog = false" :disabled="loading">Cancel</v-btn>
-          <v-btn type="submit" color="info" text :loading="loading">Rename</v-btn>
+          <v-btn @click="dialog = false" :disabled="loading">Cancel</v-btn>
+          <v-btn type="submit" color="info" :loading="loading">Rename</v-btn>
         </v-card-actions>
       </v-form>
     </v-card>

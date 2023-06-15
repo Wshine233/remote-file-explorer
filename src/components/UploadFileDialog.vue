@@ -35,6 +35,7 @@ export default {
   name: "UploadFileDialog",
   components: {ConfirmDialog},
   props: ['root'],
+  emits: ['confirm'],
   data() {
     return {
       dialog: false,

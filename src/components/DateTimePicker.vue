@@ -11,12 +11,12 @@
           <div class="time-symbol">:</div>
           <v-text-field v-model="second" variant="outlined" type="number" label="Second" density="compact" readonly style="margin-left: 5px" @focusin="focus = 'second'"></v-text-field>
         </div>
-        <v-slider v-model="value" :max="max" :min="min" step="1" color="primary" hide-details thumb-label></v-slider>
+        <v-slider v-model="value" :max="max" :min="min" step="1" color="primary" hide-details></v-slider>
       </v-card-text>
       <v-card-actions>
         <v-spacer></v-spacer>
-        <v-btn text @click="dialog = false">Cancel</v-btn>
-        <v-btn text @click="submit" :disabled="!valid">OK</v-btn>
+        <v-btn @click="dialog = false">Cancel</v-btn>
+        <v-btn @click="submit" :disabled="!valid">OK</v-btn>
       </v-card-actions>
     </v-card>
   </v-dialog>

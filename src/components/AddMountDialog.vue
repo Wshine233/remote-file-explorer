@@ -46,7 +46,7 @@ export default {
       targetRules: [
         v => !!v || 'Target is required',
         v => v.length <= 255 || 'Target must be less than 255 characters',
-        v => !/[*\\?"<>|]/.test(v) || 'Target cannot contain the following characters: \\*?"<>|'
+        v => !/[*?"<>|]/.test(v) || 'Target cannot contain the following characters: *?"<>|'
       ],
       root: '',
       rootRules: [

@@ -6,15 +6,15 @@
       </v-card-title>
       <v-form ref="form" @submit.prevent="confirm">
         <v-card-text>
-          <v-text-field v-model="name" :rules="nameRules" label="Folder Name" autofocus clearable  style="padding-left: 8px; padding-right: 8px"></v-text-field>
+          <v-text-field v-model="name" :rules="nameRules" label="Folder Name" autofocus clearable style="padding-left: 8px; padding-right: 8px"></v-text-field>
           <v-expand-transition>
             <v-alert v-if="success" color="success">Folder Created!</v-alert>
           </v-expand-transition>
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn text @click="dialog = false" :disabled="loading">Cancel</v-btn>
-          <v-btn type="submit" color="info" text :loading="loading">Create</v-btn>
+          <v-btn @click="dialog = false" :disabled="loading">Cancel</v-btn>
+          <v-btn type="submit" color="info" :loading="loading">Create</v-btn>
         </v-card-actions>
       </v-form>
     </v-card>
