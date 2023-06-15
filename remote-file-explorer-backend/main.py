@@ -18,10 +18,6 @@ def hello():
     return jsonify({'message': 'Hello, World!'})
 
 
-@app.route('/test/download', methods=['GET'])
-def test_download():
-    return send_file("D:/[]临时工作间/[Mabors-Sub][Fate stay night Heaven's Feel III.spring song][Movie][720P][GB][BDrip][AVC AAC YUV420P8].mp4", as_attachment=True)
-
 
 """ 用户请求部分 """
 

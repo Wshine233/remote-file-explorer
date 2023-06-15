@@ -4,7 +4,7 @@ export const defaultState = {
   currentSession: undefined,
   globalSettings: {
     virtualMode: true, //是否开启虚拟模式（本地演示模式）
-    backendUrl: "https://localhost:8512", //后端服务器地址
+    backendUrl: "http://localhost:8512", //后端服务器地址
   }
 }
 

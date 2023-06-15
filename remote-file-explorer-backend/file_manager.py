@@ -9,86 +9,92 @@ import search_helper as sh
 
 
 # 挂载列表
-mounts = {
-    Path('D:/Unity 3D/Projects'): {
-        'target': 'D:/Unity 3D/Projects',   # 被挂载的目录/文件位置，必须是绝对路径且唯一；启动时会检查是否存在；
-        'root': '/Unity 3D/Unity 项目',   # 挂载到的路径，必须以/开头，且唯一；一个挂载点只能挂载一个目录/文件; 不能直接挂载到'/'
-    },
-    Path('D:/_Pictures/【图片】'): {
-        'target': 'D:/_Pictures/【图片】',
-        'root': '/我的图片',
-    }
-}
+mounts = {}
+
+# {
+#     Path('D:/Unity 3D/Projects'): {
+#         'target': 'D:/Unity 3D/Projects',   # 被挂载的目录/文件位置，必须是绝对路径且唯一；启动时会检查是否存在；
+#         'root': '/Unity 3D/Unity 项目',   # 挂载到的路径，必须以/开头，且唯一；一个挂载点只能挂载一个目录/文件; 不能直接挂载到'/'
+#     },
+#     Path('D:/_Pictures/【图片】'): {
+#         'target': 'D:/_Pictures/【图片】',
+#         'root': '/我的图片',
+#     }
+# }
 
 # 文件权限列表
-perms = {
-    Path('D:/Unity 3D/Projects'): {
-        'file': 'D:/Unity 3D/Projects',   # 目标目录/文件的绝对路径
-        'visibleGroup': ['super', 'admin', 'restrict'],   # 可见的权限组
-        'visibleUser': ['admin'],   # 可见的用户，覆盖权限组规则
-        'invisibleUser': ['user1'],   # 不可见的用户，覆盖权限组规则
-        'rules': [
-            {
-                'type': 0,   # 0为权限组规则，1为用户规则
-                'target': 'admin',   # 目标权限组/用户
-                'permission': '**-**',   # 权限
-            },
-            {
-                'type': 0,
-                'target': 'restrict',
-                'permission': 'adxms'
-            }
-        ]
-    },
-    Path('D:/_Pictures/【图片】'): {
-        'file': 'D:/_Pictures/【图片】',
-        'visibleGroup': ['super', 'admin', 'restrict'],
-        'visibleUser': ['admin'],
-        'invisibleUser': ['user1'],
-        'rules': [
-            {
-                'type': 0,
-                'target': 'admin',
-                'permission': '**-**'
-            },
-            {
-                'type': 0,
-                'target': 'restrict',
-                'permission': '-----'
-            }
-        ]
-    },
-    Path('D:/_Pictures/【图片】/download/你看不见我哦♡'): {
-        'file': 'D:/_Pictures/【图片】/download/你看不见我哦♡',
-        'visibleGroup': [],
-        'visibleUser': [],
-        'invisibleUser': [],
-        'rules': []
-    },
-    Path('D:/_Pictures/【图片】/测试'): {
-        'file': 'D:/_Pictures/【图片】/测试',
-        'visibleGroup': ['super', 'admin', 'restrict'],
-        'visibleUser': ['admin'],
-        'invisibleUser': ['user1'],
-        'rules': [
-            {
-                'type': 0,
-                'target': 'admin',
-                'permission': '*****'
-            },
-            {
-                'type': 0,
-                'target': 'restrict',
-                'permission': '-----'
-            }
-        ]
-    },
-}
+perms = {}
+
+# {
+#     Path('D:/Unity 3D/Projects'): {
+#         'file': 'D:/Unity 3D/Projects',   # 目标目录/文件的绝对路径
+#         'visibleGroup': ['super', 'admin', 'restrict'],   # 可见的权限组
+#         'visibleUser': ['admin'],   # 可见的用户，覆盖权限组规则
+#         'invisibleUser': ['user1'],   # 不可见的用户，覆盖权限组规则
+#         'rules': [
+#             {
+#                 'type': 0,   # 0为权限组规则，1为用户规则
+#                 'target': 'admin',   # 目标权限组/用户
+#                 'permission': '**-**',   # 权限
+#             },
+#             {
+#                 'type': 0,
+#                 'target': 'restrict',
+#                 'permission': 'adxms'
+#             }
+#         ]
+#     },
+#     Path('D:/_Pictures/【图片】'): {
+#         'file': 'D:/_Pictures/【图片】',
+#         'visibleGroup': ['super', 'admin', 'restrict'],
+#         'visibleUser': ['admin'],
+#         'invisibleUser': ['user1'],
+#         'rules': [
+#             {
+#                 'type': 0,
+#                 'target': 'admin',
+#                 'permission': '**-**'
+#             },
+#             {
+#                 'type': 0,
+#                 'target': 'restrict',
+#                 'permission': '-----'
+#             }
+#         ]
+#     },
+#     Path('D:/_Pictures/【图片】/download/你看不见我哦♡'): {
+#         'file': 'D:/_Pictures/【图片】/download/你看不见我哦♡',
+#         'visibleGroup': [],
+#         'visibleUser': [],
+#         'invisibleUser': [],
+#         'rules': []
+#     },
+#     Path('D:/_Pictures/【图片】/测试'): {
+#         'file': 'D:/_Pictures/【图片】/测试',
+#         'visibleGroup': ['super', 'admin', 'restrict'],
+#         'visibleUser': ['admin'],
+#         'invisibleUser': ['user1'],
+#         'rules': [
+#             {
+#                 'type': 0,
+#                 'target': 'admin',
+#                 'permission': '*****'
+#             },
+#             {
+#                 'type': 0,
+#                 'target': 'restrict',
+#                 'permission': '-----'
+#             }
+#         ]
+#     },
+# }
 
 # 忽略列表（使用绝对路径）
-ignores = [
-    Path('D:/test/ignore').resolve()
-]
+ignores = []
+
+# [
+#     Path('D:/test/ignore').resolve()
+# ]
 
 
 
