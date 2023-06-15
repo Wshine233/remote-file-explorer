@@ -84,11 +84,9 @@
 
   <div style="position: sticky; bottom: 0; background-color: transparent">
     <AudioPreviewer ref="audioPreview" :src="previewSrc"/>
-    <v-slide-y-reverse-transition>
-      <ToolbarAction v-if="selectMode" :select-list="selectList" :base="path" ref="actions" :super-user="superUser"
-                     @selectAll="selectAll" @selectInvert="selectInvert"
-                     @delete="changePath(path)" @rename="changePath(path)" @permSet="changePath(path)" @copy-move="updateCopyMove" @ignore="changePath(path)"/>
-    </v-slide-y-reverse-transition>
+    <ToolbarAction :select-list="selectList" :base="path" ref="actions" :super-user="superUser" :visible="selectMode"
+                   @selectAll="selectAll" @selectInvert="selectInvert"
+                   @delete="changePath(path)" @rename="changePath(path)" @permSet="changePath(path)" @copy-move="updateCopyMove" @ignore="changePath(path)"/>
   </div>
 
   <ImagePreviewDialog ref="imgPreview" :src="previewSrc"/>

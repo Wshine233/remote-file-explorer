@@ -1,72 +1,79 @@
 <template>
-  <v-sheet class="bottom-menu bottom-sticky" color="surface">
-    <v-btn variant="text" :stacked="true" size="small" density="comfortable" :disabled="!canShare" @click="showShare">
-      <v-icon>mdi-share</v-icon>
-      <span>Share</span>
-    </v-btn>
+  <v-slide-y-reverse-transition>
+    <v-sheet v-if="visible" class="bottom-menu bottom-sticky" color="surface">
+      <v-btn variant="text" :stacked="true" size="small" density="comfortable" :disabled="!canShare" @click="showShare">
+        <v-icon>mdi-share</v-icon>
+        <span>Share</span>
+      </v-btn>
 
-    <v-btn variant="text" :stacked="true" size="small" density="comfortable" :disabled="!canRename"
-    @click="showRename">
-      <v-icon>mdi-form-textbox</v-icon>
-      <span>Rename</span>
-    </v-btn>
+      <v-btn variant="text" :stacked="true" size="small" density="comfortable" :disabled="!canRename"
+             @click="showRename">
+        <v-icon>mdi-form-textbox</v-icon>
+        <span>Rename</span>
+      </v-btn>
 
-    <v-btn variant="text" :stacked="true" size="small" density="comfortable" :disabled="!canCopy" @click="addClipboard('copy')">
-      <v-icon>mdi-content-copy</v-icon>
-      <span>Copy</span>
-    </v-btn>
+      <v-btn variant="text" :stacked="true" size="small" density="comfortable" :disabled="!canCopy"
+             @click="addClipboard('copy')">
+        <v-icon>mdi-content-copy</v-icon>
+        <span>Copy</span>
+      </v-btn>
 
-    <v-btn variant="text" :stacked="true" size="small" density="comfortable" color="important" :disabled="!canDelete"
-    @click="deleteConfirm = true">
-      <v-icon>mdi-delete</v-icon>
-      <span>Delete</span>
-    </v-btn>
+      <v-btn variant="text" :stacked="true" size="small" density="comfortable" color="important" :disabled="!canDelete"
+             @click="deleteConfirm = true">
+        <v-icon>mdi-delete</v-icon>
+        <span>Delete</span>
+      </v-btn>
 
-    <v-btn id="more" variant="text" :stacked="true" size="small" density="comfortable" :disabled="!canMore">
-      <v-icon>mdi-dots-horizontal</v-icon>
-      <span>More</span>
-      <v-menu activator="parent" z-index="10087">
-        <v-list>
-          <v-list-item v-if="selectList.length > 0" title="Download" value="download" density="comfortable" @click="download">
-            <template v-slot:prepend>
-              <v-icon style="margin-inline-end: 10px" icon="mdi-download"
-                      size="26"></v-icon>
-            </template>
-          </v-list-item>
-          <v-list-item title="Move" value="move" density="comfortable" :disabled="!canMove" @click="addClipboard('move')">
-            <template v-slot:prepend>
-              <v-icon style="margin-inline-end: 12px" icon="mdi-file-move"
-                      size="24"></v-icon>
-            </template>
-          </v-list-item>
-          <v-list-item v-if="superUser" title="Set Permission" value="perm" density="comfortable" color="important" @click="showPermSet" :disabled="!canSetPerm">
-            <template v-slot:prepend>
-              <v-icon style="margin-inline-end: 10px" icon="mdi-playlist-plus"
-                      size="26" color="important"></v-icon>
-            </template>
-          </v-list-item>
-          <v-list-item v-if="superUser" title="Add Ignore" value="perm" density="comfortable" color="important" @click="addIgnore" :disabled="!hasSelect">
-            <template v-slot:prepend>
-              <v-icon style="margin-inline-end: 10px" icon="mdi-eye-remove"
-                      size="26" color="important"></v-icon>
-            </template>
-          </v-list-item>
-          <v-list-item title="Select All" value="select-all" density="comfortable" @click="selectAll">
-            <template v-slot:prepend>
-              <v-icon style="margin-inline-end: 10px" size="26" color="warning">mdi-select-all</v-icon>
-            </template>
-          </v-list-item>
-          <v-list-item title="Select Invert" value="select-invert" density="comfortable" @click="selectInvert">
-            <template v-slot:prepend>
-              <v-icon style="margin-inline-end: 10px" size="26" color="warning">mdi-select-inverse</v-icon>
-            </template>
-          </v-list-item>
-        </v-list>
-      </v-menu>
-    </v-btn>
-  </v-sheet>
+      <v-btn id="more" variant="text" :stacked="true" size="small" density="comfortable" :disabled="!canMore">
+        <v-icon>mdi-dots-horizontal</v-icon>
+        <span>More</span>
+        <v-menu activator="parent" z-index="10087">
+          <v-list>
+            <v-list-item v-if="selectList.length > 0" title="Download" value="download" density="comfortable"
+                         @click="download">
+              <template v-slot:prepend>
+                <v-icon style="margin-inline-end: 10px" icon="mdi-download"
+                        size="26"></v-icon>
+              </template>
+            </v-list-item>
+            <v-list-item title="Move" value="move" density="comfortable" :disabled="!canMove"
+                         @click="addClipboard('move')">
+              <template v-slot:prepend>
+                <v-icon style="margin-inline-end: 12px" icon="mdi-file-move"
+                        size="24"></v-icon>
+              </template>
+            </v-list-item>
+            <v-list-item v-if="superUser" title="Set Permission" value="perm" density="comfortable" color="important"
+                         @click="showPermSet" :disabled="!canSetPerm">
+              <template v-slot:prepend>
+                <v-icon style="margin-inline-end: 10px" icon="mdi-playlist-plus"
+                        size="26" color="important"></v-icon>
+              </template>
+            </v-list-item>
+            <v-list-item v-if="superUser" title="Add Ignore" value="perm" density="comfortable" color="important"
+                         @click="addIgnore" :disabled="!hasSelect">
+              <template v-slot:prepend>
+                <v-icon style="margin-inline-end: 10px" icon="mdi-eye-remove"
+                        size="26" color="important"></v-icon>
+              </template>
+            </v-list-item>
+            <v-list-item title="Select All" value="select-all" density="comfortable" @click="selectAll">
+              <template v-slot:prepend>
+                <v-icon style="margin-inline-end: 10px" size="26" color="warning">mdi-select-all</v-icon>
+              </template>
+            </v-list-item>
+            <v-list-item title="Select Invert" value="select-invert" density="comfortable" @click="selectInvert">
+              <template v-slot:prepend>
+                <v-icon style="margin-inline-end: 10px" size="26" color="warning">mdi-select-inverse</v-icon>
+              </template>
+            </v-list-item>
+          </v-list>
+        </v-menu>
+      </v-btn>
+    </v-sheet>
+  </v-slide-y-reverse-transition>
 
-  <ShareDrawer ref="share" />
+  <ShareDrawer ref="share"/>
 
   <v-dialog v-model="deleteConfirm">
     <v-card>
@@ -83,7 +90,7 @@
   <RenameFileDialog ref="rename" @confirm="renamed"/>
   <SetFilePermDialog ref="setPerm" @confirm="permSet"/>
 
-  <v-snackbar v-model="popup" timeout="2000" color="error">{{errMsg}}</v-snackbar>
+  <v-snackbar v-model="popup" timeout="2000" color="error">{{ errMsg }}</v-snackbar>
 </template>
 
 <script>
@@ -97,7 +104,7 @@ import SetFilePermDialog from "@/components/SetFilePermDialog";
 export default {
   name: "ToolbarAction",
   components: {SetFilePermDialog, RenameFileDialog, ShareDrawer},
-  props: ['selectList', 'base', 'superUser'],
+  props: ['selectList', 'base', 'superUser', 'visible'],
   emits: ['selectAll', 'selectInvert', 'delete', 'rename', 'permSet', 'copy-move', 'ignore'],
   data() {
     return {
@@ -110,7 +117,7 @@ export default {
     }
   },
   computed: {
-    hasSelect(){
+    hasSelect() {
       return this.selectList.length > 0
     },
     canShare() {
@@ -138,7 +145,7 @@ export default {
     canDownload() {
       return this.permission[1] === 'd'
     },
-    canSetPerm(){
+    canSetPerm() {
       return this.superUser && this.selectList.length === 1
     }
   },
@@ -170,38 +177,38 @@ export default {
       }
       this.permission = result
     },
-    selectAll(){
+    selectAll() {
       this.$emit('selectAll')
     },
-    selectInvert(){
+    selectInvert() {
       this.$emit('selectInvert')
     },
-    showShare(){
+    showShare() {
       this.$refs.share.show()
     },
-    showRename(){
+    showRename() {
       this.$refs.rename.show(this.selectList[0])
     },
-    showPermSet(){
+    showPermSet() {
       this.$refs.setPerm.show(this.selectList[0])
     },
-    renamed(){
+    renamed() {
       this.$emit('rename')
     },
-    permSet(){
-      if(this.selectList.length !== 1){
+    permSet() {
+      if (this.selectList.length !== 1) {
         window.alert("暂不支持同时编辑多个文件的权限")
         return
       }
       this.$emit('permSet')
     },
-    download(){
-      if(this.selectList.length !== 1){
+    download() {
+      if (this.selectList.length !== 1) {
         window.alert("暂不支持同时下载多个文件")
         return
       }
       let file = this.selectList[0]
-      if(file.type === 0){
+      if (file.type === 0) {
         window.alert("暂不支持下载文件夹")
         return
       }
@@ -211,17 +218,17 @@ export default {
         path: file.path,
         perm: 'd'
       }).then(res => {
-        if(res.data){
+        if (res.data) {
           window.open(systemState.globalSettings.backendUrl + '/file/download?sessionId=' + systemState.currentSession + '&path=' + file.path)
-        }else{
+        } else {
           this.popupMsg("You don't have permission to download this file.")
         }
       })
     },
-    deleteSelected(){
+    deleteSelected() {
       this.deleteLoading = true
       let paths = []
-      for(let file of this.selectList){
+      for (let file of this.selectList) {
         paths.push(file.path)
         delete clipBoard[file.path]
       }
@@ -238,14 +245,14 @@ export default {
         this.popupMsg(err.message)
       })
     },
-    addClipboard(mode){
+    addClipboard(mode) {
       for (let file of this.selectList) {
         addToClipboard(file.path, file.type, mode)
       }
       syncToLocalStorage()
       this.$emit('copy-move')
     },
-    addIgnore(){
+    addIgnore() {
       let list = this.selectList.map(file => file.path)
 
       post('/ignore/adds', {
